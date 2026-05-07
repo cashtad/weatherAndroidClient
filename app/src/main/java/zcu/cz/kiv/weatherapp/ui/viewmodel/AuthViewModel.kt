@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.data.AuthRepository
 import zcu.cz.kiv.weatherapp.data.local.LocationStore
 import zcu.cz.kiv.weatherapp.data.model.Location
+import zcu.cz.kiv.weatherapp.data.remote.userMessage
 
 class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -36,7 +37,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
             _error.value = null
             repo.login(email, password)
                 .onSuccess { onSuccess() }
-                .onFailure { _error.value = it.message ?: "Login failed" }
+                .onFailure { _error.value = it.userMessage() }
             _loading.value = false
         }
     }
@@ -47,7 +48,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
             _error.value = null
             repo.register(email, password)
                 .onSuccess { onSuccess() }
-                .onFailure { _error.value = it.message ?: "Register failed" }
+                .onFailure { _error.value = it.userMessage() }
             _loading.value = false
         }
     }

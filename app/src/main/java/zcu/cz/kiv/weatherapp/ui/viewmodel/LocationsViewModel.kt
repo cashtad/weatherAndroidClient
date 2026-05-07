@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.data.LocationRepository
 import zcu.cz.kiv.weatherapp.data.remote.dto.FavoriteLocationResponse
 import zcu.cz.kiv.weatherapp.data.remote.dto.GeoLocationDto
+import zcu.cz.kiv.weatherapp.data.remote.userMessage
 
 class LocationsViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -30,9 +31,9 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _loading.value = true
             _error.value = null
-            runCatching { repo.getFavorites() }
+            repo.getFavorites()
                 .onSuccess { _favorites.value = it }
-                .onFailure { _error.value = it.message }
+                .onFailure { _error.value = it.userMessage() }
             _loading.value = false
         }
     }
@@ -41,13 +42,14 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             if (query.isBlank()) {
                 _searchResults.value = emptyList()
+                _error.value = null
                 return@launch
             }
             _loading.value = true
             _error.value = null
-            runCatching { repo.search(query) }
+            repo.search(query)
                 .onSuccess { _searchResults.value = it }
-                .onFailure { _error.value = it.message }
+                .onFailure { _error.value = it.userMessage() }
             _loading.value = false
         }
     }
@@ -56,12 +58,12 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _loading.value = true
             _error.value = null
-            runCatching { repo.addFavorite(loc) }
+            repo.addFavorite(loc)
                 .onSuccess {
                     loadFavorites()
                     onDone()
                 }
-                .onFailure { _error.value = it.message }
+                .onFailure { _error.value = it.userMessage() }
             _loading.value = false
         }
     }

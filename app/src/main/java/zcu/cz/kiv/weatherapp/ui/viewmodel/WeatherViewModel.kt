@@ -7,10 +7,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
 import zcu.cz.kiv.weatherapp.data.WeatherRepository
 import zcu.cz.kiv.weatherapp.data.model.Location
 import zcu.cz.kiv.weatherapp.data.remote.dto.WeatherResponse
+import zcu.cz.kiv.weatherapp.data.remote.userMessage
 
 data class WeatherUiState(
     val loading: Boolean = false,
@@ -29,27 +29,29 @@ class WeatherViewModel(app: Application) : AndroidViewModel(app) {
 
     fun load(location: Location) {
         viewModelScope.launch {
-            _state.value = WeatherUiState(loading = true)
+            val previous = _state.value
+            _state.value = previous.copy(loading = true, error = null)
 
-            runCatching {
-                val current = async { repo.current(location.lat, location.lon).current }
-                val daily = async { repo.daily(location.lat, location.lon).daily }
-                val hourly = async { repo.hourly(location.lat, location.lon).hourly }
-                WeatherUiState(
-                    loading = false,
-                    current = current.await(),
-                    daily = daily.await(),
-                    hourly = hourly.await()
-                )
-            }.onFailure {
-                val msg = when (it) {
-                    is HttpException -> "Server error: ${it.code()}"
-                    else -> it.message ?: "Unknown error"
-                }
-                _state.value = WeatherUiState(loading = false, error = msg)
-            }.onSuccess {
-                _state.value = it
-            }
+            val currentDeferred = async { repo.current(location.lat, location.lon) }
+            val hourlyDeferred = async { repo.hourly(location.lat, location.lon) }
+            val dailyDeferred = async { repo.daily(location.lat, location.lon) }
+
+            val currentResult = currentDeferred.await()
+            val hourlyResult = hourlyDeferred.await()
+            val dailyResult = dailyDeferred.await()
+
+            val error = listOf(currentResult, hourlyResult, dailyResult)
+                .mapNotNull { it.exceptionOrNull() }
+                .firstOrNull()
+                ?.userMessage()
+
+            _state.value = WeatherUiState(
+                loading = false,
+                error = error,
+                current = currentResult.getOrNull()?.current ?: previous.current,
+                hourly = hourlyResult.getOrNull()?.hourly ?: previous.hourly,
+                daily = dailyResult.getOrNull()?.daily ?: previous.daily
+            )
         }
     }
 }

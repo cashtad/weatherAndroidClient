@@ -4,17 +4,18 @@ import android.content.Context
 import zcu.cz.kiv.weatherapp.data.local.TokenStore
 import zcu.cz.kiv.weatherapp.data.remote.RetrofitClient
 import zcu.cz.kiv.weatherapp.data.remote.dto.AuthRequest
+import zcu.cz.kiv.weatherapp.data.remote.safeApiCall
 
 class AuthRepository(context: Context) {
     private val api = RetrofitClient.api
     private val tokenStore = TokenStore(context)
 
-    suspend fun login(email: String, password: String): Result<Unit> = runCatching {
+    suspend fun login(email: String, password: String): Result<Unit> = safeApiCall {
         val response = api.login(AuthRequest(email, password))
         tokenStore.saveToken(response.token)
     }
 
-    suspend fun register(email: String, password: String): Result<Unit> = runCatching {
+    suspend fun register(email: String, password: String): Result<Unit> = safeApiCall {
         val response = api.register(AuthRequest(email, password))
         tokenStore.saveToken(response.token)
     }
