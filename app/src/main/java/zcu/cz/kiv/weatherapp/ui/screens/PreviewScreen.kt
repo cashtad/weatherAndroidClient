@@ -36,7 +36,8 @@ fun PreviewScreen(
                 WeatherContent(
                     title = location.displayName,
                     current = state.current,
-                    daily = state.daily
+                    daily = state.daily,
+                    hourly = state.hourly
                 )
             }
 

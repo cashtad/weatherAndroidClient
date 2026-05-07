@@ -8,6 +8,7 @@ data class WeatherResponse(
     val timezone: String,
     @Json(name = "timezone_offset") val timezoneOffset: Int,
     val current: Current? = null,
+    val hourly: List<Hourly>? = null,
     val daily: List<Daily>? = null
 ) {
     data class Current(
@@ -25,6 +26,23 @@ data class WeatherResponse(
         @Json(name = "wind_speed") val windSpeed: Double,
         @Json(name = "wind_deg") val windDeg: Int,
         val weather: List<Weather>
+    )
+
+    data class Hourly(
+        val dt: Long,
+        val temp: Double,
+        @Json(name = "feels_like") val feelsLike: Double,
+        val pressure: Int,
+        val humidity: Int,
+        @Json(name = "dew_point") val dewPoint: Double,
+        val uvi: Double,
+        val clouds: Int,
+        val visibility: Int,
+        @Json(name = "wind_speed") val windSpeed: Double,
+        @Json(name = "wind_deg") val windDeg: Int,
+        @Json(name = "wind_gust") val windGust: Double?,
+        val weather: List<Weather>,
+        val pop: Double
     )
 
     data class Daily(

@@ -16,6 +16,7 @@ data class WeatherUiState(
     val loading: Boolean = false,
     val error: String? = null,
     val current: WeatherResponse.Current? = null,
+    val hourly: List<WeatherResponse.Hourly>? = null,
     val daily: List<WeatherResponse.Daily>? = null
 )
 
@@ -33,10 +34,12 @@ class WeatherViewModel(app: Application) : AndroidViewModel(app) {
             runCatching {
                 val current = async { repo.current(location.lat, location.lon).current }
                 val daily = async { repo.daily(location.lat, location.lon).daily }
+                val hourly = async { repo.hourly(location.lat, location.lon).hourly }
                 WeatherUiState(
                     loading = false,
                     current = current.await(),
-                    daily = daily.await()
+                    daily = daily.await(),
+                    hourly = hourly.await()
                 )
             }.onFailure {
                 val msg = when (it) {

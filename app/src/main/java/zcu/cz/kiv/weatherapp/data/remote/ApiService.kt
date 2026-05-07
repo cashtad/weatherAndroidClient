@@ -27,6 +27,12 @@ interface ApiService {
         @Query("lon") lon: Double
     ): WeatherResponse
 
+    @GET("weather/hourly")
+    suspend fun hourly(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double
+    ): WeatherResponse
+
     @GET("weather/daily")
     suspend fun daily(
         @Query("lat") lat: Double,

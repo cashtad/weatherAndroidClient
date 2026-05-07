@@ -9,6 +9,9 @@ class WeatherRepository {
     suspend fun current(lat: Double, lon: Double): WeatherResponse =
         api.current(lat, lon)
 
+    suspend fun hourly(lat: Double, lon: Double): WeatherResponse =
+        api.hourly(lat, lon)
+
     suspend fun daily(lat: Double, lon: Double): WeatherResponse =
         api.daily(lat, lon)
 }

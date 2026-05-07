@@ -13,6 +13,7 @@ import zcu.cz.kiv.weatherapp.data.remote.dto.WeatherResponse
 import zcu.cz.kiv.weatherapp.ui.util.iconUrl
 import java.time.Instant
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -20,13 +21,14 @@ import java.util.Locale
 fun WeatherContent(
     title: String,
     current: WeatherResponse.Current?,
-    daily: List<WeatherResponse.Daily>?
+    daily: List<WeatherResponse.Daily>?,
+    hourly: List<WeatherResponse.Hourly>?
 ) {
     current?.let { SummarySection(it) }
 
     Spacer(Modifier.height(12.dp))
 
-    HourlySection() // Заглушка на будущее
+    hourly?.let { HourlySection(it) }
 
     Spacer(Modifier.height(12.dp))
 
@@ -66,26 +68,35 @@ fun SummarySection(current: WeatherResponse.Current) {
     }
 }
 
+private val hourFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+private fun formatHour(ts: Long): String =
+    Instant.ofEpochSecond(ts).atZone(ZoneId.systemDefault()).format(hourFormatter)
+
+
+
 @Composable
-fun HourlySection() {
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-        containerColor = zcu.cz.kiv.weatherapp.ui.theme.CardGlass
-    )) {
+fun HourlySection(hourly: List<WeatherResponse.Hourly>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = zcu.cz.kiv.weatherapp.ui.theme.CardGlass)
+    ) {
         Column(Modifier.padding(16.dp)) {
             Text("Next 24 hours", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
 
-            val fake = listOf("12:00" to 20, "15:00" to 22, "18:00" to 19, "21:00" to 17)
-
             LazyRow {
-                items(fake) { item ->
-                    Card(Modifier.padding(end = 8.dp)) {
+                items(hourly.take(24)) { item ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = zcu.cz.kiv.weatherapp.ui.theme.CardGlass),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
                         Column(
                             Modifier.padding(12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(item.first)
-                            Text("${item.second}°")
+                            Text(formatHour(item.dt))
+                            Text("${item.temp}°")
                         }
                     }
                 }

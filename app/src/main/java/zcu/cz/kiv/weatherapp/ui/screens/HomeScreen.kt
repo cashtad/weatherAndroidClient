@@ -52,7 +52,8 @@ fun HomeScreen(
                 WeatherContent(
                     title = selected.displayName,
                     current = state.current,
-                    daily = state.daily
+                    daily = state.daily,
+                    hourly = state.hourly
                 )
             }
         }
