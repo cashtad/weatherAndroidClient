@@ -1,5 +1,8 @@
 package zcu.cz.kiv.weatherapp.ui.screens
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,9 +34,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import zcu.cz.kiv.weatherapp.data.location.LocationProvider
 import zcu.cz.kiv.weatherapp.data.model.Location
 import zcu.cz.kiv.weatherapp.data.remote.dto.FavoriteLocationResponse
 import zcu.cz.kiv.weatherapp.ui.components.CurrentLocationCard
@@ -41,6 +46,7 @@ import zcu.cz.kiv.weatherapp.ui.components.FavoriteLocationItem
 import zcu.cz.kiv.weatherapp.ui.components.GuestLoginCard
 import zcu.cz.kiv.weatherapp.ui.components.SearchResultRow
 import zcu.cz.kiv.weatherapp.ui.components.SectionTitle
+import zcu.cz.kiv.weatherapp.ui.util.locationFromCoords
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AuthViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel
@@ -52,7 +58,6 @@ fun LocationsHubScreen(
     authViewModel: AuthViewModel,
     viewModel: LocationsViewModel,
     onLocationClick: (Location) -> Unit,
-    onUseCurrentLocation: () -> Unit,
     onLoginClick: () -> Unit
 ) {
     val favorites by viewModel.favorites.collectAsState()
@@ -64,6 +69,32 @@ fun LocationsHubScreen(
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    val context = LocalContext.current
+    val locationProvider = remember { LocationProvider(context) }
+
+    val locationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fine = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        val coarse = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+        if (fine || coarse) {
+            scope.launch {
+                val loc = locationProvider.getCurrentLocation()
+                if (loc != null) {
+                    val location = locationFromCoords(loc.latitude, loc.longitude)
+                    onLocationClick(location)
+                } else {
+                    snackbarHostState.showSnackbar("Не удалось получить геолокацию")
+                }
+            }
+        } else {
+            scope.launch {
+                snackbarHostState.showSnackbar("Разрешение на геолокацию не выдано")
+            }
+        }
+    }
 
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
@@ -163,7 +194,12 @@ fun LocationsHubScreen(
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
                 item { SectionTitle("Текущая локация") }
-                item { CurrentLocationCard(onClick = onUseCurrentLocation) }
+                item { CurrentLocationCard(onClick = { locationPermission.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                ) }) }
 
                 item { SectionTitle("Сохранённые") }
 

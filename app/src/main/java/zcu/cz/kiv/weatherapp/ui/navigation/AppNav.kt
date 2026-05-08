@@ -42,7 +42,6 @@ fun AppNavGraph(
                     appViewModel.setLocation(location)
                     navController.navigate(Screen.Weather.route)
                 },
-                onUseCurrentLocation = { /* запросить GPS */ },
                 onLoginClick = { navController.navigate(Screen.Auth.route) }
             )
         }
