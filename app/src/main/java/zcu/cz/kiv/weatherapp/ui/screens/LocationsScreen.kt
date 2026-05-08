@@ -44,7 +44,7 @@ fun LocationsScreen(
                 value = query,
                 onValueChange = {
                     query = it
-                    vm.search(it)
+                    vm.onSearchQueryChanged(it)
                 },
                 label = { Text("Search city") },
                 modifier = Modifier.fillMaxWidth()
