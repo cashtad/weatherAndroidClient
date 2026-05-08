@@ -33,10 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.data.model.Location
 import zcu.cz.kiv.weatherapp.data.remote.dto.FavoriteLocationResponse
 import zcu.cz.kiv.weatherapp.ui.components.CurrentLocationCard
 import zcu.cz.kiv.weatherapp.ui.components.FavoriteLocationItem
+import zcu.cz.kiv.weatherapp.ui.components.GuestLoginCard
 import zcu.cz.kiv.weatherapp.ui.components.SearchResultRow
 import zcu.cz.kiv.weatherapp.ui.components.SectionTitle
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
@@ -51,21 +53,22 @@ fun LocationsHubScreen(
     viewModel: LocationsViewModel,
     onLocationClick: (Location) -> Unit,
     onUseCurrentLocation: () -> Unit,
+    onLoginClick: () -> Unit
 ) {
     val favorites by viewModel.favorites.collectAsState()
     val results by viewModel.searchResults.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
 
+    val isLoggedIn = authViewModel.isLoggedIn()
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    val isLoggedIn = authViewModel.isLoggedIn()
-
-
-    LaunchedEffect(Unit) {
-        viewModel.loadFavorites()
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            viewModel.loadFavorites()
+        }
     }
 
     LaunchedEffect(error) {
@@ -78,11 +81,7 @@ fun LocationsHubScreen(
     var active by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Локации") }
-            )
-        },
+        topBar = { TopAppBar(title = { Text("Локации") }) },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
 
@@ -113,19 +112,40 @@ fun LocationsHubScreen(
                             .fillMaxWidth()
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    ) { CircularProgressIndicator() }
                 }
+
                 if (results.isNotEmpty()) {
                     results.forEach { item ->
                         SearchResultRow(
                             item = item,
                             onAdd = {
-                                viewModel.addFavorite(item) {
-                                    query = ""
-                                    active = false
+                                if (!isLoggedIn) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            "Войдите, чтобы сохранять локации"
+                                        )
+                                    }
+                                    onLoginClick()
+                                } else {
+                                    viewModel.addFavorite(item) {
+                                        query = ""
+                                        active = false
+                                    }
                                 }
+                            },
+                            onClick = {
+                                val location = Location(
+                                    name = item.name,
+                                    country = item.country,
+                                    state = item.state,
+                                    lat = item.lat,
+                                    lon = item.lon,
+                                    displayName = item.displayName
+                                )
+                                onLocationClick(location)
+                                active = false
+                                query = ""
                             }
                         )
                     }
@@ -142,29 +162,21 @@ fun LocationsHubScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-                item {
-                    SectionTitle("Текущая локация")
-                }
-                item {
-                    CurrentLocationCard(
-                        onClick = onUseCurrentLocation
-                    )
-                }
+                item { SectionTitle("Текущая локация") }
+                item { CurrentLocationCard(onClick = onUseCurrentLocation) }
 
-                item {
-                    SectionTitle("Сохранённые")
-                }
+                item { SectionTitle("Сохранённые") }
 
-                items(favorites, key = { it.id }) { fav ->
-                    FavoriteLocationItem(
-                        fav = fav,
-                        onClick = {
-                            onLocationClick(fav.toLocation())
-                        },
-                        onDelete = {
-                            viewModel.deleteFavorite(fav.id)
-                        }
-                    )
+                if (!isLoggedIn) {
+                    item { GuestLoginCard(onLogin = onLoginClick) }
+                } else {
+                    items(favorites, key = { it.id }) { fav ->
+                        FavoriteLocationItem(
+                            fav = fav,
+                            onClick = { onLocationClick(fav.toLocation()) },
+                            onDelete = { viewModel.deleteFavorite(fav.id) }
+                        )
+                    }
                 }
             }
         }

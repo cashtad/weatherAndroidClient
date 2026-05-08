@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
+import zcu.cz.kiv.weatherapp.ui.screens.AuthScreen
 import zcu.cz.kiv.weatherapp.ui.screens.LocationsHubScreen
 import zcu.cz.kiv.weatherapp.ui.screens.WeatherDetailScreen
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
@@ -14,6 +15,7 @@ import zcu.cz.kiv.weatherapp.ui.viewmodel.WeatherViewModel
 sealed class Screen(val route: String) {
     object Hub : Screen("hub")
     object Weather : Screen("weather")
+    object Auth : Screen("auth")
 }
 
 @Composable
@@ -40,9 +42,8 @@ fun AppNavGraph(
                     appViewModel.setLocation(location)
                     navController.navigate(Screen.Weather.route)
                 },
-                onUseCurrentLocation = {
-                    // сюда привяжешь запрос геолокации и setLocation(...)
-                }
+                onUseCurrentLocation = { /* запросить GPS */ },
+                onLoginClick = { navController.navigate(Screen.Auth.route) }
             )
         }
 
@@ -51,7 +52,14 @@ fun AppNavGraph(
                 appViewModel = appViewModel,
                 weatherViewModel = weatherViewModel,
                 onBack = { navController.popBackStack() },
-                onToggleSave = { /* опционально: добавить/убрать из избранного */ }
+                onToggleSave = { /* optional */ }
+            )
+        }
+
+        composable(Screen.Auth.route) {
+            AuthScreen(
+                authViewModel = authViewModel,
+                onSuccess = { navController.popBackStack() }
             )
         }
     }

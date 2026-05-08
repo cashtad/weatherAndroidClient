@@ -1,15 +1,18 @@
 package zcu.cz.kiv.weatherapp.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -94,7 +97,8 @@ fun FavoriteLocationItem(
 @Composable
 fun SearchResultRow(
     item: GeoLocationDto,
-    onAdd: () -> Unit
+    onAdd: () -> Unit,
+    onClick: () -> Unit
 ) {
     ListItem(
         headlineContent = { Text(item.displayName) },
@@ -103,6 +107,28 @@ fun SearchResultRow(
             IconButton(onClick = onAdd) {
                 Icon(Icons.Rounded.Add, contentDescription = "Добавить")
             }
-        }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
     )
+}
+
+@Composable
+fun GuestLoginCard(onLogin: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth()
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text("Сохранение недоступно", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Войдите, чтобы сохранять и синхронизировать локации.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = onLogin) { Text("Войти") }
+        }
+    }
 }
