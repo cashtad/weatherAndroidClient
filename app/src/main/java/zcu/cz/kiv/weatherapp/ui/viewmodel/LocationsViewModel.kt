@@ -22,6 +22,8 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
     private val _favorites = MutableStateFlow<List<FavoriteLocationResponse>>(emptyList())
     val favorites: StateFlow<List<FavoriteLocationResponse>> = _favorites
 
+    private var recentlyDeleted: FavoriteLocationResponse? = null
+
     private val searchQuery = MutableStateFlow("")
 
     private val _searchResults = MutableStateFlow<List<GeoLocationDto>>(emptyList())
@@ -98,5 +100,44 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
 
             _loading.value = false
         }
+    }
+
+    fun deleteFavorite(id: String) {
+        viewModelScope.launch {
+            _loading.value = true
+            _error.value = null
+
+            repo.deleteFavorite(id)
+                .onSuccess {
+                    loadFavorites()   // обновляем список
+                }
+                .onFailure {
+                    _error.value = it.userMessage()
+                }
+
+            _loading.value = false
+        }
+    }
+
+    fun removeFavoriteLocally(fav: FavoriteLocationResponse) {
+        recentlyDeleted = fav
+        _favorites.value = _favorites.value.filterNot { it.id == fav.id }
+    }
+
+    fun confirmDeleteFavorite() {
+        val fav = recentlyDeleted ?: return
+
+        viewModelScope.launch {
+            repo.deleteFavorite(fav.id)
+                .onFailure { _error.value = it.userMessage() }
+        }
+
+        recentlyDeleted = null
+    }
+
+    fun undoDelete() {
+        val fav = recentlyDeleted ?: return
+        _favorites.value = listOf(fav) + _favorites.value
+        recentlyDeleted = null
     }
 }

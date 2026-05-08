@@ -41,9 +41,7 @@ fun WeatherContent(
 
 @Composable
 fun SummarySection(current: WeatherResponse.Current) {
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-        containerColor = zcu.cz.kiv.weatherapp.ui.theme.CardGlass
-    )) {
+    Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -78,8 +76,7 @@ private fun formatHour(ts: Long): String =
 @Composable
 fun HourlySection(hourly: List<WeatherResponse.Hourly>) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = zcu.cz.kiv.weatherapp.ui.theme.CardGlass)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(16.dp)) {
             Text("Next 24 hours", style = MaterialTheme.typography.titleMedium)
@@ -113,9 +110,7 @@ private fun dayOfWeek(ts: Long): String =
 
 @Composable
 fun DailySection(daily: List<WeatherResponse.Daily>) {
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-        containerColor = zcu.cz.kiv.weatherapp.ui.theme.CardGlass
-    )) {
+    Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text("7 days", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
@@ -135,9 +130,7 @@ fun DailySection(daily: List<WeatherResponse.Daily>) {
 
 @Composable
 fun DetailsSection(current: WeatherResponse.Current) {
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-        containerColor = zcu.cz.kiv.weatherapp.ui.theme.CardGlass
-    )) {
+    Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text("Details", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))

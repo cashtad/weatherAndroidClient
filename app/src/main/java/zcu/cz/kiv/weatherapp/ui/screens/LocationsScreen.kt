@@ -13,6 +13,17 @@ import zcu.cz.kiv.weatherapp.data.model.Location
 import zcu.cz.kiv.weatherapp.data.remote.dto.FavoriteLocationResponse
 import zcu.cz.kiv.weatherapp.data.remote.dto.GeoLocationDto
 import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Icon
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,11 +37,17 @@ fun LocationsScreen(
     val results by vm.searchResults.collectAsState()
     val error by vm.error.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
     var query by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) { vm.loadFavorites() }
 
+
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Locations") },
@@ -73,18 +90,62 @@ fun LocationsScreen(
                 }
             } else {
                 LazyColumn {
-                    items(favorites) { fav ->
-                        LocationRow(fav.displayName) {
-                            onSelectFavorite(
-                                Location(
-                                    name = fav.name,
-                                    country = fav.country,
-                                    state = fav.state,
-                                    lat = fav.lat,
-                                    lon = fav.lon,
-                                    displayName = fav.displayName
+                    items(favorites, key = { it.id }) { fav ->
+
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = { value ->
+                                if (value == SwipeToDismissBoxValue.EndToStart) {
+                                    vm.removeFavoriteLocally(fav)
+
+                                    scope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = "Location deleted",
+                                            actionLabel = "UNDO",
+                                            duration = SnackbarDuration.Long
+                                        )
+
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            vm.undoDelete()
+                                        } else {
+                                            vm.confirmDeleteFavorite()
+                                        }
+                                    }
+                                    true
+                                } else false
+                            }
+                        )
+
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = false, // только свайп влево
+                            backgroundContent = {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Red)
+                                        .padding(end = 20.dp),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete",
+                                        tint = Color.White
+                                    )
+                                }
+                            }
+                        ) {
+                            LocationRow(fav.displayName) {
+                                onSelectFavorite(
+                                    Location(
+                                        name = fav.name,
+                                        country = fav.country,
+                                        state = fav.state,
+                                        lat = fav.lat,
+                                        lon = fav.lon,
+                                        displayName = fav.displayName
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                 }
