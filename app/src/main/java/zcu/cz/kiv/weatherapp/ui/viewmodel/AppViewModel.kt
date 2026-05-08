@@ -12,7 +12,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val store = LocationStore(app)
 
     private val _selectedLocation = MutableStateFlow(store.load())
-    val selectedLocation: StateFlow<Location?> = _selectedLocation
+    val selectedLocation: StateFlow<Location?> = _selectedLocation //TODO: почему "?"
 
     fun setLocation(location: Location) {
         _selectedLocation.value = location
