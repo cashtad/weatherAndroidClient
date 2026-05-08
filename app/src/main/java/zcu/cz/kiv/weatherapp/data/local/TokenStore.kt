@@ -3,6 +3,7 @@ package zcu.cz.kiv.weatherapp.data.local
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import androidx.core.content.edit
 
 class TokenStore(context: Context) {
 
@@ -19,12 +20,12 @@ class TokenStore(context: Context) {
     )
 
     fun saveToken(token: String) {
-        prefs.edit().putString("token", token).apply()
+        prefs.edit { putString("token", token) }
     }
 
     fun getToken(): String? = prefs.getString("token", null)
 
     fun clearToken() {
-        prefs.edit().remove("token").apply()
+        prefs.edit { remove("token") }
     }
 }
