@@ -1,36 +1,53 @@
 package zcu.cz.kiv.weatherapp.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import zcu.cz.kiv.weatherapp.data.model.Location
 import zcu.cz.kiv.weatherapp.data.remote.dto.FavoriteLocationResponse
-import zcu.cz.kiv.weatherapp.data.remote.dto.GeoLocationDto
+import zcu.cz.kiv.weatherapp.ui.components.CurrentLocationCard
+import zcu.cz.kiv.weatherapp.ui.components.FavoriteLocationItem
+import zcu.cz.kiv.weatherapp.ui.components.SearchResultRow
+import zcu.cz.kiv.weatherapp.ui.components.SectionTitle
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
+import zcu.cz.kiv.weatherapp.ui.viewmodel.AuthViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel
-import kotlinx.coroutines.launch
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.LocationOn
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.SnackbarDuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationsHubScreen(
     appViewModel: AppViewModel,
+    authViewModel: AuthViewModel,
     viewModel: LocationsViewModel,
     onLocationClick: (Location) -> Unit,
     onUseCurrentLocation: () -> Unit,
@@ -91,7 +108,12 @@ fun LocationsHubScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 if (loading) {
-                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         CircularProgressIndicator()
                     }
                 }
@@ -149,88 +171,6 @@ fun LocationsHubScreen(
     }
 }
 
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    )
-}
-
-@Composable
-private fun CurrentLocationCard(onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth(),
-        onClick = onClick
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Rounded.LocationOn, contentDescription = null)
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text("Текущая локация", style = MaterialTheme.typography.titleMedium)
-                Text("Использовать GPS", style = MaterialTheme.typography.bodyMedium)
-            }
-        }
-    }
-}
-
-@Composable
-private fun FavoriteLocationItem(
-    fav: FavoriteLocationResponse,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .fillMaxWidth(),
-        onClick = onClick
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    fav.displayName,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    listOfNotNull(fav.state, fav.country).joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = "Удалить")
-            }
-        }
-    }
-}
-
-@Composable
-private fun SearchResultRow(
-    item: GeoLocationDto,
-    onAdd: () -> Unit
-) {
-    ListItem(
-        headlineContent = { Text(item.displayName) },
-        supportingContent = { Text(listOfNotNull(item.state, item.country).joinToString(" · ")) },
-        trailingContent = {
-            IconButton(onClick = onAdd) {
-                Icon(Icons.Rounded.Add, contentDescription = "Добавить")
-            }
-        }
-    )
-}
 
 private fun FavoriteLocationResponse.toLocation(): Location {
     return Location(

@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.data.AuthRepository
-import zcu.cz.kiv.weatherapp.data.local.LocationStore
 import zcu.cz.kiv.weatherapp.data.model.Location
 import zcu.cz.kiv.weatherapp.data.remote.userMessage
 
@@ -21,15 +20,6 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private val store = LocationStore(app)
-
-    private val _selectedLocation = MutableStateFlow(store.load())
-    val selectedLocation: StateFlow<Location?> = _selectedLocation
-
-    fun setLocation(location: Location) {
-        _selectedLocation.value = location
-        store.save(location)
-    }
 
     fun login(email: String, password: String, onSuccess: () -> Unit) {
         viewModelScope.launch {

@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.viewmodel.compose.viewModel
 import zcu.cz.kiv.weatherapp.ui.navigation.AppNavGraph
-import zcu.cz.kiv.weatherapp.ui.theme.WeatherAppTheme
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AuthViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel
@@ -15,19 +14,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            WeatherAppTheme(darkTheme = true) {
-                val appViewModel: AppViewModel = viewModel()
-                val authViewModel: AuthViewModel = viewModel()
-                val locationsViewModel: LocationsViewModel = viewModel()
-                val weatherViewModel: WeatherViewModel = viewModel()
 
-                AppNavGraph(
-                    appViewModel = appViewModel,
-                    authViewModel = authViewModel,
-                    locationsViewModel = locationsViewModel,
-                    weatherViewModel = weatherViewModel
-                )
-            }
+            val appViewModel: AppViewModel = viewModel()
+            val authViewModel: AuthViewModel = viewModel()
+            val locationsViewModel: LocationsViewModel = viewModel()
+            val weatherViewModel: WeatherViewModel = viewModel()
+
+            AppNavGraph(
+                appViewModel = appViewModel,
+                authViewModel = authViewModel,
+                locationsViewModel = locationsViewModel,
+                weatherViewModel = weatherViewModel
+            )
+
         }
     }
 }
