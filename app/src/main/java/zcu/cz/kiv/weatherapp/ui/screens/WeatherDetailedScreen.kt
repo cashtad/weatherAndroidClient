@@ -157,7 +157,7 @@ fun WeatherDetailScreen(
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = "На 7 дней",
+                                    text = "На неделю",
                                     style = MaterialTheme.typography.titleSmall,
                                     modifier = Modifier.padding(bottom = 8.dp),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
