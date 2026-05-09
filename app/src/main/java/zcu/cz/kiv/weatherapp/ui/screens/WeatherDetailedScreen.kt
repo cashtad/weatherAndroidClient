@@ -1,41 +1,26 @@
 package zcu.cz.kiv.weatherapp.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.BookmarkBorder
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.data.remote.dto.GeoLocationDto
 import zcu.cz.kiv.weatherapp.data.remote.dto.WeatherResponse
@@ -77,54 +62,39 @@ fun WeatherDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(location?.name ?: "Погода") },
+                title = { Text(location?.name ?: "Погода", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Назад")
                     }
                 },
                 actions = {
-                    if (location?.isFromGps == true) {
-                        return@TopAppBar
-                    }
-                    IconButton(
-                        onClick = {
-                            if (!isLoggedIn) {
-                                scope.launch { snackbarHostState.showSnackbar("Войдите, чтобы сохранить") }
-                                return@IconButton
-                            }
-
-                            val loc = location ?: return@IconButton
-
-
-                            if (!isFavorite) {
-                                locationsViewModel.addFavorite(
-                                    GeoLocationDto(
-                                        name = loc.name,
-                                        country = loc.country,
-                                        state = loc.state,
-                                        lat = loc.lat,
-                                        lon = loc.lon,
-                                        displayName = loc.displayName
-                                    )
-                                ) {
-                                    scope.launch { snackbarHostState.showSnackbar("Локация сохранена") }
+                    if (location?.isFromGps != true) {
+                        IconButton(
+                            onClick = {
+                                if (!isLoggedIn) {
+                                    scope.launch { snackbarHostState.showSnackbar("Войдите, чтобы сохранить") }
+                                    return@IconButton
                                 }
-                            } else {
-                                val fav = favorites.firstOrNull {
-                                    it.lat == loc.lat && it.lon == loc.lon
-                                } ?: return@IconButton
-                                locationsViewModel.deleteFavorite(fav.id) {
-                                    scope.launch { snackbarHostState.showSnackbar("Локация убрана из сохранённых") }
+                                val loc = location ?: return@IconButton
 
+                                if (!isFavorite) {
+                                    locationsViewModel.addFavorite(
+                                        GeoLocationDto(loc.name, loc.country, loc.state, loc.lat, loc.lon, loc.displayName)
+                                    ) { scope.launch { snackbarHostState.showSnackbar("Локация сохранена") } }
+                                } else {
+                                    val fav = favorites.firstOrNull { it.lat == loc.lat && it.lon == loc.lon } ?: return@IconButton
+                                    locationsViewModel.deleteFavorite(fav.id) {
+                                        scope.launch { snackbarHostState.showSnackbar("Удалено из сохранённых") }
+                                    }
                                 }
                             }
+                        ) {
+                            Icon(
+                                if (isFavorite) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+                                contentDescription = "Сохранить"
+                            )
                         }
-                    ) {
-                        Icon(
-                            if (isFavorite) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
-                            contentDescription = "Сохранить"
-                        )
                     }
                 }
             )
@@ -133,125 +103,372 @@ fun WeatherDetailScreen(
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = state.loading,
-            onRefresh = {
-                location?.let { weatherViewModel.load(it) }
-            },
+            onRefresh = { location?.let { weatherViewModel.load(it) } },
             modifier = Modifier.padding(padding)
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 32.dp)
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // 1. Главный блок (Температура)
                 item {
-                    CurrentWeatherCard(state.current)
+                    val todayDaily = state.daily?.firstOrNull()
+                    CurrentWeatherHeader(
+                        current = state.current,
+                        todayMax = todayDaily?.temp?.max,
+                        todayMin = todayDaily?.temp?.min
+                    )
                 }
 
-                item { SectionHeader("Почасовой прогноз") }
-                items(state.hourly ?: emptyList()) { hour ->
-                    HourlyRow(hour)
+                // 2. Почасовой прогноз (горизонтальный скролл)
+                if (!state.hourly.isNullOrEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        ) {
+                            Column(modifier = Modifier.padding(vertical = 16.dp)) {
+                                Text(
+                                    text = "Прогноз на 24 часа",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                LazyRow(
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    items(state.hourly!!.take(24)) { hour -> // Берем первые 24 часа для красоты
+                                        HourlyForecastItem(hour)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
-                item { SectionHeader("На 7 дней") }
-                items(state.daily ?: emptyList()) { day ->
-                    DailyRow(day)
+                // 3. Прогноз на 7 дней
+                if (!state.daily.isNullOrEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "На 7 дней",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(bottom = 8.dp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                state.daily!!.forEach { day ->
+                                    DailyForecastRow(day)
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                                }
+                            }
+                        }
+                    }
                 }
 
-                item { SectionHeader("Подробности") }
+                // 4. Сетка с деталями
                 item {
-                    DetailsGrid(state.current)
+                    state.current?.let { current ->
+                        WeatherDetailsGrid(current)
+                    }
                 }
+
+                item { Spacer(modifier = Modifier.height(32.dp)) }
+            }
+        }
+    }
+}
+
+// --- КОМПОНЕНТЫ ИНТЕРФЕЙСА ---
+
+@Composable
+fun CurrentWeatherHeader(current: WeatherResponse.Current?, todayMax: Double?, todayMin: Double?) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        val temp = current?.temp?.roundToInt()?.toString() ?: "--"
+        val desc = current?.weather?.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: "—"
+
+        Text(
+            text = "$temp°",
+            fontSize = 80.sp, // ОГРОМНЫЕ цифры
+            fontWeight = FontWeight.Light,
+            lineHeight = 80.sp
+        )
+        Text(
+            text = desc,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        if (todayMax != null && todayMin != null) {
+            Text(
+                text = "Макс.: ${todayMax.roundToInt()}°, Мин.: ${todayMin.roundToInt()}°",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun HourlyForecastItem(hour: WeatherResponse.Hourly) {
+    val iconCode = hour.weather.firstOrNull()?.icon
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(60.dp)
+    ) {
+        Text(
+            text = formatHour(hour.dt),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        AsyncImage(
+            model = "https://openweathermap.org/img/wn/$iconCode@2x.png",
+            contentDescription = null,
+            modifier = Modifier.size(48.dp)
+        )
+        Text(
+            text = "${hour.temp.roundToInt()}°",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun DailyForecastRow(day: WeatherResponse.Daily) {
+    val iconCode = day.weather.firstOrNull()?.icon
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = formatDay(day.dt),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        AsyncImage(
+            model = "https://openweathermap.org/img/wn/$iconCode@2x.png",
+            contentDescription = null,
+            modifier = Modifier.size(40.dp)
+        )
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "${day.temp.min.roundToInt()}°",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, // Незаметнее
+                modifier = Modifier.padding(end = 16.dp)
+            )
+            Text(
+                text = "${day.temp.max.roundToInt()}°",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun WeatherDetailsGrid(current: WeatherResponse.Current) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Первый ряд: Ощущается как + УФ Индекс
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            DetailCard(
+                title = "Ощущается как",
+                icon = Icons.Rounded.Thermostat,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "${current.feelsLike.roundToInt()}°",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            DetailCard(
+                title = "УФ-индекс",
+                icon = Icons.Rounded.WbSunny,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = current.uvi.toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                LinearProgressIndicator(
+                    progress = { (current.uvi / 11f).toFloat().coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)),
+                    color = getUvColor(current.uvi),
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+                Text(
+                    text = getUvDescription(current.uvi),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+
+        // Второй ряд: Ветер + Влажность
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            DetailCard(
+                title = "Ветер",
+                icon = Icons.Rounded.Air,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "${current.windSpeed.roundToInt()} м/с",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Направление: ${getWindDirection(current.windDeg)}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                if (current.windGust != null) {
+                    Text(
+                        text = "Порывы до ${current.windGust.roundToInt()} м/с",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
+            DetailCard(
+                title = "Влажность",
+                icon = Icons.Rounded.WaterDrop,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "${current.humidity}%",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Точка росы: ${current.dewPoint.roundToInt()}°",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+
+        // Третий ряд: Солнце (Рассвет/Закат) + Давление
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            DetailCard(
+                title = "Солнце",
+                icon = Icons.Rounded.LightMode,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Рассвет: ${current.sunrise?.let { formatHour(it) } ?: "--"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Закат: ${current.sunset?.let { formatHour(it) } ?: "--"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            DetailCard(
+                title = "Давление",
+                icon = Icons.Rounded.Compress,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "${current.pressure}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "гПа",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CurrentWeatherCard(current: WeatherResponse.Current?) {
+fun DetailCard(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
     Card(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth(),
+        modifier = modifier.aspectRatio(1f), // Делает карточки квадратными
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Сейчас", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "${current?.temp?.roundToInt() ?: "--"}°",
-                style = MaterialTheme.typography.displayLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = current?.weather?.firstOrNull()?.description ?: "—",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "Ощущается: ${current?.feelsLike?.roundToInt() ?: "--"}°",
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            content()
         }
     }
 }
 
-@Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    )
-}
-
-@Composable
-private fun HourlyRow(hour: WeatherResponse.Hourly) {
-    ListItem(
-        headlineContent = { Text(formatHour(hour.dt)) },
-        supportingContent = { Text(hour.weather.firstOrNull()?.description ?: "") },
-        trailingContent = { Text("${hour.temp.roundToInt()}°") }
-    )
-}
-
-@Composable
-private fun DailyRow(day: WeatherResponse.Daily) {
-    ListItem(
-        headlineContent = { Text(formatDay(day.dt)) },
-        supportingContent = { Text(day.weather.firstOrNull()?.description ?: "") },
-        trailingContent = {
-            Text("${day.temp.min.roundToInt()}° / ${day.temp.max.roundToInt()}°")
-        }
-    )
-}
-
-@Composable
-private fun DetailsGrid(current: WeatherResponse.Current?) {
-    Column(Modifier.padding(16.dp)) {
-        DetailItem("Влажность", "${current?.humidity ?: "--"}%")
-        DetailItem("Давление", "${current?.pressure ?: "--"} hPa")
-        DetailItem("Ветер", "${current?.windSpeed ?: "--"} м/с")
-        DetailItem("Облачность", "${current?.clouds ?: "--"}%")
-        DetailItem("UV индекс", "${current?.uvi ?: "--"}")
-    }
-}
-
-@Composable
-private fun DetailItem(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium)
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-    }
-}
+// --- УТИЛИТЫ И ФОРМАТТЕРЫ ---
 
 private fun formatHour(epoch: Long): String =
     Instant.ofEpochSecond(epoch)
         .atZone(ZoneId.systemDefault())
         .format(DateTimeFormatter.ofPattern("HH:mm"))
 
-private fun formatDay(epoch: Long): String =
-    Instant.ofEpochSecond(epoch)
-        .atZone(ZoneId.systemDefault())
-        .format(DateTimeFormatter.ofPattern("EEE, d MMM"))
+private fun formatDay(epoch: Long): String {
+    val date = Instant.ofEpochSecond(epoch).atZone(ZoneId.systemDefault())
+    val today = Instant.now().atZone(ZoneId.systemDefault()).dayOfYear
+    return if (date.dayOfYear == today) "Сегодня" else date.format(DateTimeFormatter.ofPattern("EEE, d MMM"))
+}
+
+private fun getWindDirection(deg: Int): String {
+    val directions = arrayOf("С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ")
+    val index = ((deg / 45.0) + 0.5).toInt() % 8
+    return directions[index]
+}
+
+private fun getUvDescription(uvi: Double): String = when {
+    uvi < 3 -> "Низкий"
+    uvi < 6 -> "Умеренный"
+    uvi < 8 -> "Высокий"
+    uvi < 11 -> "Очень высокий"
+    else -> "Экстремальный"
+}
+
+@Composable
+private fun getUvColor(uvi: Double): Color = when {
+    uvi < 3 -> Color(0xFF4CAF50) // Green
+    uvi < 6 -> Color(0xFFFFEB3B) // Yellow
+    uvi < 8 -> Color(0xFFFF9800) // Orange
+    uvi < 11 -> Color(0xFFF44336) // Red
+    else -> Color(0xFF9C27B0)     // Purple
+}
