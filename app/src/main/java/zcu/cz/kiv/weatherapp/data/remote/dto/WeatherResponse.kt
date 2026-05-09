@@ -10,7 +10,8 @@ data class WeatherResponse(
     val current: Current? = null,
     val minutely: List<Minutely>? = null,
     val hourly: List<Hourly>? = null,
-    val daily: List<Daily>? = null
+    val daily: List<Daily>? = null,
+    val alerts: List<Alert>? = null
 ) {
 
     data class Weather(
@@ -94,6 +95,10 @@ data class WeatherResponse(
         val rain: Double? = null,
         val snow: Double? = null,
         val weather: List<Weather>
+    )
+
+    data class Alert(
+        val sender_name: String
     )
 
     data class Temp(

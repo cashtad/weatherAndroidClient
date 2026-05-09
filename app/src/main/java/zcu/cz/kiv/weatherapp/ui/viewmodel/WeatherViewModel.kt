@@ -32,15 +32,11 @@ class WeatherViewModel(app: Application) : AndroidViewModel(app) {
             val previous = _state.value
             _state.value = previous.copy(loading = true, error = null)
 
-            val currentDeferred = async { repo.current(location.lat, location.lon) }
-            val hourlyDeferred = async { repo.hourly(location.lat, location.lon) }
-            val dailyDeferred = async { repo.daily(location.lat, location.lon) }
+            val allDeferred = async { repo.all(location.lat, location.lon) }
 
-            val currentResult = currentDeferred.await()
-            val hourlyResult = hourlyDeferred.await()
-            val dailyResult = dailyDeferred.await()
+            val allResult = allDeferred.await()
 
-            val error = listOf(currentResult, hourlyResult, dailyResult)
+            val error = listOf(allResult)
                 .mapNotNull { it.exceptionOrNull() }
                 .firstOrNull()
                 ?.userMessage()
@@ -48,9 +44,9 @@ class WeatherViewModel(app: Application) : AndroidViewModel(app) {
             _state.value = WeatherUiState(
                 loading = false,
                 error = error,
-                current = currentResult.getOrNull()?.current ?: previous.current,
-                hourly = hourlyResult.getOrNull()?.hourly ?: previous.hourly,
-                daily = dailyResult.getOrNull()?.daily ?: previous.daily
+                current = allResult.getOrNull()?.current ?: previous.current,
+                hourly = allResult.getOrNull()?.hourly ?: previous.hourly,
+                daily = allResult.getOrNull()?.daily ?: previous.daily
             )
         }
     }

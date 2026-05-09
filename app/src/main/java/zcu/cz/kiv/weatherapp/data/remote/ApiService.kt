@@ -39,6 +39,12 @@ interface ApiService {
         @Query("lon") lon: Double
     ): WeatherResponse
 
+    @GET("weather/all")
+    suspend fun all(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double
+    ): WeatherResponse
+
     // Favorites
     @GET("favorites")
     suspend fun favorites(@Header("Authorization") token: String): List<FavoriteLocationResponse>
