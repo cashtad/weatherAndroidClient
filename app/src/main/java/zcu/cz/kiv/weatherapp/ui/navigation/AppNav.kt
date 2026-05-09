@@ -49,8 +49,9 @@ fun AppNavGraph(
             WeatherDetailScreen(
                 appViewModel = appViewModel,
                 weatherViewModel = weatherViewModel,
+                authViewModel = authViewModel,
+                locationsViewModel = locationsViewModel,
                 onBack = { navController.popBackStack() },
-                onToggleSave = { /* optional */ }
             )
         }
 

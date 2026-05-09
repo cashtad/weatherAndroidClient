@@ -102,7 +102,7 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun deleteFavorite(id: String) {
+    fun deleteFavorite(id: String, onDone: () -> Unit) {
         viewModelScope.launch {
             _loading.value = true
             _error.value = null
@@ -110,6 +110,7 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
             repo.deleteFavorite(id)
                 .onSuccess {
                     loadFavorites()   // обновляем список
+                    onDone()
                 }
                 .onFailure {
                     _error.value = it.userMessage()

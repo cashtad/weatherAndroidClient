@@ -5,3 +5,4 @@ TODO list:
         - timeouts + retry
     - доделать кнопку сохранения локации
     - переделать WeatherDetailedScreen
+    - добавить кэш для погоды

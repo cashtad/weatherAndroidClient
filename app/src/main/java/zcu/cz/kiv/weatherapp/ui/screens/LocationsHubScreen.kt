@@ -171,7 +171,8 @@ fun LocationsHubScreen(
                                     state = item.state,
                                     lat = item.lat,
                                     lon = item.lon,
-                                    displayName = item.displayName
+                                    displayName = item.displayName,
+                                    isFromGps = false
                                 )
                                 onLocationClick(location)
                                 active = false
@@ -209,7 +210,9 @@ fun LocationsHubScreen(
                         FavoriteLocationItem(
                             fav = fav,
                             onClick = { onLocationClick(fav.toLocation()) },
-                            onDelete = { viewModel.deleteFavorite(fav.id) }
+                            onDelete = { viewModel.deleteFavorite(fav.id) {
+                                scope.launch { snackbarHostState.showSnackbar("Локация убрана из сохранённых") }
+                            } }
                         )
                     }
                 }
@@ -226,6 +229,7 @@ private fun FavoriteLocationResponse.toLocation(): Location {
         state = state,
         lat = lat,
         lon = lon,
-        displayName = displayName
+        displayName = displayName,
+        isFromGps = false
     )
 }

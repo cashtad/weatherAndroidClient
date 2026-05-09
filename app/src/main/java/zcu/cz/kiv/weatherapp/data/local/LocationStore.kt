@@ -15,6 +15,7 @@ class LocationStore(context: Context) {
             .putString("displayName", location.displayName)
             .putFloat("lat", location.lat.toFloat())
             .putFloat("lon", location.lon.toFloat())
+            .putBoolean("isFromGps", location.isFromGps)
             .apply()
     }
 
@@ -22,13 +23,15 @@ class LocationStore(context: Context) {
         val name = prefs.getString("name", null) ?: return null
         val lat = prefs.getFloat("lat", 0f)
         val lon = prefs.getFloat("lon", 0f)
+        val isFromGps = prefs.getBoolean("isFromGps", false)
         return Location(
             name = name,
             country = prefs.getString("country", null),
             state = prefs.getString("state", null),
             lat = lat.toDouble(),
             lon = lon.toDouble(),
-            displayName = prefs.getString("displayName", name) ?: name
+            displayName = prefs.getString("displayName", name) ?: name,
+            isFromGps = isFromGps
         )
     }
 }

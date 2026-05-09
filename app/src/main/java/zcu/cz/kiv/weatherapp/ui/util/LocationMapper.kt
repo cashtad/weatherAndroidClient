@@ -9,6 +9,7 @@ fun locationFromCoords(lat: Double, lon: Double): Location {
         state = null,
         lat = lat,
         lon = lon,
-        displayName = "Текущая локация"
+        displayName = "Текущая локация",
+        isFromGps = true
     )
 }

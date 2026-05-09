@@ -16,24 +16,39 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import zcu.cz.kiv.weatherapp.data.remote.dto.GeoLocationDto
 import zcu.cz.kiv.weatherapp.data.remote.dto.WeatherResponse
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
+import zcu.cz.kiv.weatherapp.ui.viewmodel.AuthViewModel
+import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.WeatherViewModel
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherDetailScreen(
     appViewModel: AppViewModel,
+    authViewModel: AuthViewModel,
+    locationsViewModel: LocationsViewModel,
     weatherViewModel: WeatherViewModel,
     onBack: () -> Unit,
-    onToggleSave: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val location by appViewModel.selectedLocation.collectAsState()
     val state by weatherViewModel.state.collectAsState()
+
+    val favorites by locationsViewModel.favorites.collectAsState()
+    val isLoggedIn = authViewModel.isLoggedIn()
+
+    val isFavorite = favorites.any {
+        it.lat == location?.lat && it.lon == location?.lon
+    }
 
     LaunchedEffect(location) {
         location?.let { weatherViewModel.load(it) }
@@ -49,13 +64,53 @@ fun WeatherDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onToggleSave) {
-                        Icon(Icons.Rounded.BookmarkBorder, contentDescription = "Сохранить")
+                    if (location?.isFromGps == true) {
+                        return@TopAppBar
+                    }
+                    IconButton(
+                        onClick = {
+                            if (!isLoggedIn) {
+                                scope.launch { snackbarHostState.showSnackbar("Войдите, чтобы сохранить") }
+                                return@IconButton
+                            }
+
+                            val loc = location ?: return@IconButton
+
+
+                            if (!isFavorite) {
+                                locationsViewModel.addFavorite(
+                                    GeoLocationDto(
+                                        name = loc.name,
+                                        country = loc.country,
+                                        state = loc.state,
+                                        lat = loc.lat,
+                                        lon = loc.lon,
+                                        displayName = loc.displayName
+                                    )
+                                ) {
+                                    scope.launch { snackbarHostState.showSnackbar("Локация сохранена") }
+                                }
+                            } else {
+                                val fav = favorites.firstOrNull {
+                                    it.lat == loc.lat && it.lon == loc.lon
+                                } ?: return@IconButton
+                                locationsViewModel.deleteFavorite(fav.id) {
+                                    scope.launch { snackbarHostState.showSnackbar("Локация убрана из сохранённых") }
+
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            if (isFavorite) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+                            contentDescription = "Сохранить"
+                        )
                     }
                 }
             )
-        }
-    ) { padding ->
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        ) { padding ->
         PullToRefreshBox(
             isRefreshing = state.loading,
             onRefresh = {
