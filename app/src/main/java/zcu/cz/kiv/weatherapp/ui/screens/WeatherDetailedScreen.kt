@@ -1,10 +1,13 @@
 package zcu.cz.kiv.weatherapp.ui.screens
-
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import zcu.cz.kiv.weatherapp.R
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -16,8 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -111,7 +114,6 @@ fun WeatherDetailScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 1. Главный блок (Температура)
                 item {
                     val todayDaily = state.daily?.firstOrNull()
                     CurrentWeatherHeader(
@@ -121,7 +123,6 @@ fun WeatherDetailScreen(
                     )
                 }
 
-                // 2. Почасовой прогноз (горизонтальный скролл)
                 if (!state.hourly.isNullOrEmpty()) {
                     item {
                         Card(
@@ -139,7 +140,7 @@ fun WeatherDetailScreen(
                                     contentPadding = PaddingValues(horizontal = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    items(state.hourly!!.take(24)) { hour -> // Берем первые 24 часа для красоты
+                                    items(state.hourly!!.take(24)) { hour ->
                                         HourlyForecastItem(hour)
                                     }
                                 }
@@ -148,7 +149,6 @@ fun WeatherDetailScreen(
                     }
                 }
 
-                // 3. Прогноз на 7 дней
                 if (!state.daily.isNullOrEmpty()) {
                     item {
                         Card(
@@ -171,7 +171,6 @@ fun WeatherDetailScreen(
                     }
                 }
 
-                // 4. Сетка с деталями
                 item {
                     state.current?.let { current ->
                         WeatherDetailsGrid(current)
@@ -184,7 +183,6 @@ fun WeatherDetailScreen(
     }
 }
 
-// --- КОМПОНЕНТЫ ИНТЕРФЕЙСА ---
 
 @Composable
 fun CurrentWeatherHeader(current: WeatherResponse.Current?, todayMax: Double?, todayMin: Double?) {
@@ -197,7 +195,7 @@ fun CurrentWeatherHeader(current: WeatherResponse.Current?, todayMax: Double?, t
 
         Text(
             text = "$temp°",
-            fontSize = 80.sp, // ОГРОМНЫЕ цифры
+            fontSize = 80.sp,
             fontWeight = FontWeight.Light,
             lineHeight = 80.sp
         )
@@ -230,9 +228,8 @@ fun HourlyForecastItem(hour: WeatherResponse.Hourly) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        AsyncImage(
-            model = "https://openweathermap.org/img/wn/$iconCode@2x.png",
-            contentDescription = null,
+        WeatherIcon(
+            iconCode = iconCode,
             modifier = Modifier.size(48.dp)
         )
         Text(
@@ -258,9 +255,8 @@ fun DailyForecastRow(day: WeatherResponse.Daily) {
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
-        AsyncImage(
-            model = "https://openweathermap.org/img/wn/$iconCode@2x.png",
-            contentDescription = null,
+        WeatherIcon(
+            iconCode = iconCode,
             modifier = Modifier.size(40.dp)
         )
         Row(
@@ -271,7 +267,7 @@ fun DailyForecastRow(day: WeatherResponse.Daily) {
             Text(
                 text = "${day.temp.min.roundToInt()}°",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, // Незаметнее
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(end = 16.dp)
             )
             Text(
@@ -286,7 +282,6 @@ fun DailyForecastRow(day: WeatherResponse.Daily) {
 @Composable
 fun WeatherDetailsGrid(current: WeatherResponse.Current) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Первый ряд: Ощущается как + УФ Индекс
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DetailCard(
                 title = "Ощущается как",
@@ -325,7 +320,6 @@ fun WeatherDetailsGrid(current: WeatherResponse.Current) {
             }
         }
 
-        // Второй ряд: Ветер + Влажность
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DetailCard(
                 title = "Ветер",
@@ -366,7 +360,6 @@ fun WeatherDetailsGrid(current: WeatherResponse.Current) {
             }
         }
 
-        // Третий ряд: Солнце (Рассвет/Закат) + Давление
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DetailCard(
                 title = "Солнце",
@@ -413,7 +406,7 @@ fun DetailCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        modifier = modifier.aspectRatio(1f), // Делает карточки квадратными
+        modifier = modifier.aspectRatio(1f),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -437,7 +430,6 @@ fun DetailCard(
     }
 }
 
-// --- УТИЛИТЫ И ФОРМАТТЕРЫ ---
 
 private fun formatHour(epoch: Long): String =
     Instant.ofEpochSecond(epoch)
@@ -466,9 +458,54 @@ private fun getUvDescription(uvi: Double): String = when {
 
 @Composable
 private fun getUvColor(uvi: Double): Color = when {
-    uvi < 3 -> Color(0xFF4CAF50) // Green
-    uvi < 6 -> Color(0xFFFFEB3B) // Yellow
-    uvi < 8 -> Color(0xFFFF9800) // Orange
-    uvi < 11 -> Color(0xFFF44336) // Red
-    else -> Color(0xFF9C27B0)     // Purple
+    uvi < 3 -> Color(0xFF4CAF50)
+    uvi < 6 -> Color(0xFFFFEB3B)
+    uvi < 8 -> Color(0xFFFF9800)
+    uvi < 11 -> Color(0xFFF44336)
+    else -> Color(0xFF9C27B0)
+}
+
+@Composable
+fun getWeatherIconRes(iconCode: String?): Int {
+    return when (iconCode) {
+        "01d" -> R.drawable.ic_01d
+        "01n" -> R.drawable.ic_01n
+        "02d" -> R.drawable.ic_02d
+        "02n" -> R.drawable.ic_02n
+        "03d" -> R.drawable.ic_03d
+        "03n" -> R.drawable.ic_03n
+        "04d" -> R.drawable.ic_04d
+        "04n" -> R.drawable.ic_04n
+        "09d" -> R.drawable.ic_09d
+        "09n" -> R.drawable.ic_09n
+        "10d" -> R.drawable.ic_10d
+        "10n" -> R.drawable.ic_10n
+        "11d" -> R.drawable.ic_11d
+        "11n" -> R.drawable.ic_11n
+        "13d"-> R.drawable.ic_13d
+        "13n" -> R.drawable.ic_13n
+        "50d" -> R.drawable.ic_50d
+        "50n" -> R.drawable.ic_50n
+        else -> R.drawable.ic_unknown
+    }
+}
+
+@Composable
+fun WeatherIcon(
+    iconCode: String?,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = getWeatherIconRes(iconCode)),
+            contentDescription = "Иконка погоды",
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
