@@ -3,22 +3,28 @@ package zcu.cz.kiv.weatherapp.ui.screens
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -48,7 +54,6 @@ import zcu.cz.kiv.weatherapp.ui.components.GuestLoginCard
 import zcu.cz.kiv.weatherapp.ui.components.SearchResultRow
 import zcu.cz.kiv.weatherapp.ui.components.SectionTitle
 import zcu.cz.kiv.weatherapp.ui.util.locationFromCoords
-import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AuthViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel
 
@@ -111,6 +116,16 @@ fun LocationsHubScreen(
     var query by remember { mutableStateOf("") }
     var active by remember { mutableStateOf(false) }
 
+    val horizontalPadding by animateDpAsState(
+        targetValue = if (active) 0.dp else 16.dp,
+        label = "searchBarPadding"
+    )
+    val verticalPadding by animateDpAsState(
+        targetValue = if (active) 0.dp else 4.dp,
+        label = "searchBarVerticalPadding"
+    )
+
+
     Scaffold(
         topBar = { TopAppBar(title = { Text("Локации") }) },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -123,70 +138,111 @@ fun LocationsHubScreen(
         ) {
 
             SearchBar(
-                query = query,
-                onQueryChange = {
-                    query = it
-                    viewModel.onSearchQueryChanged(it)
+                windowInsets = WindowInsets(0.dp),
+                inputField = {
+                    SearchBarDefaults.InputField(
+                        query = query,
+                        onQueryChange = {
+                            query = it
+                            viewModel.onSearchQueryChanged(it)
+                        },
+                        onSearch = {
+                            focusManager.clearFocus()
+                            active = false
+                        },
+                        expanded = active,
+                        onExpandedChange = { active = it },
+                        placeholder = { Text("Поиск локации") },
+                        leadingIcon = {
+                            Icon(Icons.Rounded.Search, contentDescription = "Поиск")
+                        },
+                        trailingIcon = {
+                            if (active) {
+                                IconButton(
+                                    onClick = {
+                                        if (query.isNotEmpty()) {
+                                            query = ""
+                                            viewModel.onSearchQueryChanged("")
+                                        } else {
+                                            active = false
+                                            focusManager.clearFocus()
+                                        }
+                                    }
+                                ) {
+                                    Icon(Icons.Rounded.Close, contentDescription = "Очистить")
+                                }
+                            }
+                        }
+                    )
                 },
-                onSearch = { focusManager.clearFocus(); active = false },
-                active = active,
-                onActiveChange = { active = it },
-                placeholder = { Text("Поиск локации") },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                expanded = active,
+                onExpandedChange = { active = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = horizontalPadding, vertical = verticalPadding)
             ) {
                 if (loading) {
                     Box(
-                        Modifier
+                        modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(32.dp),
                         contentAlignment = Alignment.Center
-                    ) { CircularProgressIndicator() }
-                }
-
-                if (results.isNotEmpty()) {
-                    results.forEach { item ->
-                        SearchResultRow(
-                            item = item,
-                            onAdd = {
-                                if (!isLoggedIn) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            "Войдите, чтобы сохранять локации"
-                                        )
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (results.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(results) { item ->
+                            SearchResultRow(
+                                item = item,
+                                onAdd = {
+                                    if (!isLoggedIn) {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "Войдите, чтобы сохранять локации"
+                                            )
+                                        }
+                                    } else {
+                                        viewModel.addFavorite(item) {
+                                            query = ""
+                                            active = false
+                                        }
                                     }
-//                                    onLoginClick()
-                                } else {
-                                    viewModel.addFavorite(item) {
-                                        query = ""
-                                        active = false
-                                    }
+                                },
+                                onClick = {
+                                    val location = Location(
+                                        name = item.name,
+                                        country = item.country,
+                                        state = item.state,
+                                        lat = item.lat,
+                                        lon = item.lon,
+                                        displayName = item.displayName,
+                                        isFromGps = false
+                                    )
+                                    onLocationClick(location)
+                                    active = false
+                                    query = ""
                                 }
-                            },
-                            onClick = {
-                                val location = Location(
-                                    name = item.name,
-                                    country = item.country,
-                                    state = item.state,
-                                    lat = item.lat,
-                                    lon = item.lon,
-                                    displayName = item.displayName,
-                                    isFromGps = false
-                                )
-                                onLocationClick(location)
-                                active = false
-                                query = ""
-                            }
+                            )
+                        }
+                    }
+                } else if (query.isNotBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Ничего не найдено",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                } else if (query.isNotBlank() && !loading) {
-                    Text(
-                        "Ничего не найдено",
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
                 }
             }
 
@@ -195,12 +251,16 @@ fun LocationsHubScreen(
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
                 item { SectionTitle("Текущая локация") }
-                item { CurrentLocationCard(onClick = { locationPermission.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    )
-                ) }) }
+                item {
+                    CurrentLocationCard(onClick = {
+                        locationPermission.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            )
+                        )
+                    })
+                }
 
                 item { SectionTitle("Сохранённые") }
 

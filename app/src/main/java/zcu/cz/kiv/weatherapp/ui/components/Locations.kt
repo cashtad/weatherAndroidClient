@@ -77,7 +77,7 @@ fun FavoriteLocationItem(
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    fav.displayName,
+                    fav.name,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -101,7 +101,7 @@ fun SearchResultRow(
     onClick: () -> Unit
 ) {
     ListItem(
-        headlineContent = { Text(item.displayName) },
+        headlineContent = { Text(item.name) },
         supportingContent = { Text(listOfNotNull(item.state, item.country).joinToString(" · ")) },
         trailingContent = {
             IconButton(onClick = onAdd) {
