@@ -54,7 +54,6 @@ import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationsHubScreen(
-    appViewModel: AppViewModel,
     authViewModel: AuthViewModel,
     viewModel: LocationsViewModel,
     onLocationClick: (Location) -> Unit,
@@ -157,7 +156,7 @@ fun LocationsHubScreen(
                                             "Войдите, чтобы сохранять локации"
                                         )
                                     }
-                                    onLoginClick()
+//                                    onLoginClick()
                                 } else {
                                     viewModel.addFavorite(item) {
                                         query = ""

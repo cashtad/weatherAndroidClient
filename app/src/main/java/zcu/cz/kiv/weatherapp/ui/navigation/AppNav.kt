@@ -35,7 +35,6 @@ fun AppNavGraph(
     ) {
         composable(Screen.Hub.route) {
             LocationsHubScreen(
-                appViewModel = appViewModel,
                 authViewModel = authViewModel,
                 viewModel = locationsViewModel,
                 onLocationClick = { location ->
