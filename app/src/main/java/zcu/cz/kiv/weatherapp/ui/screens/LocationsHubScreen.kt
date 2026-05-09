@@ -22,6 +22,7 @@ import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -210,9 +211,23 @@ fun LocationsHubScreen(
                         FavoriteLocationItem(
                             fav = fav,
                             onClick = { onLocationClick(fav.toLocation()) },
-                            onDelete = { viewModel.deleteFavorite(fav.id) {
-                                scope.launch { snackbarHostState.showSnackbar("Локация убрана из сохранённых") }
-                            } }
+                            onDelete = {
+                                viewModel.removeFavoriteLocally(fav)
+
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "Локация убрана из сохранённых",
+                                        actionLabel = "ОТМЕНА",
+                                        duration = SnackbarDuration.Long
+                                    )
+
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        viewModel.undoDelete()
+                                    } else {
+                                        viewModel.confirmDeleteFavorite()
+                                    }
+                                }
+                            }
                         )
                     }
                 }

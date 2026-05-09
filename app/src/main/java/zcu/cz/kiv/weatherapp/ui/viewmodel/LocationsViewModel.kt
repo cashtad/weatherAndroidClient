@@ -55,7 +55,6 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    // 💡 suspend — теперь корректно отменяется collectLatest
     private suspend fun performSearch(query: String) {
         if (query.isBlank()) {
             _searchResults.value = emptyList()
