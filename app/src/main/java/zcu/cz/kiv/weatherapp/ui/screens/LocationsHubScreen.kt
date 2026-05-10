@@ -1,5 +1,6 @@
 package zcu.cz.kiv.weatherapp.ui.screens
 
+
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,9 +44,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import zcu.cz.kiv.weatherapp.R
 import zcu.cz.kiv.weatherapp.data.location.LocationProvider
 import zcu.cz.kiv.weatherapp.data.model.Location
 import zcu.cz.kiv.weatherapp.data.remote.dto.FavoriteLocationResponse
@@ -79,6 +82,8 @@ fun LocationsHubScreen(
     val context = LocalContext.current
     val locationProvider = remember { LocationProvider(context) }
 
+    val locationPermissionDeniedText = stringResource(R.string.location_permission_denied)
+    val locationPermissionFailedText = stringResource(R.string.location_failed)
     val locationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -92,12 +97,12 @@ fun LocationsHubScreen(
                     val location = locationFromCoords(loc.latitude, loc.longitude)
                     onLocationClick(location)
                 } else {
-                    snackbarHostState.showSnackbar("Не удалось получить геолокацию")
+                    snackbarHostState.showSnackbar(locationPermissionFailedText)
                 }
             }
         } else {
             scope.launch {
-                snackbarHostState.showSnackbar("Разрешение на геолокацию не выдано")
+                snackbarHostState.showSnackbar(locationPermissionDeniedText)
             }
         }
     }
@@ -129,7 +134,12 @@ fun LocationsHubScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Локации", fontWeight = FontWeight.SemiBold) }
+                title = {
+                    Text(
+                        stringResource(R.string.locations_title),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -155,9 +165,9 @@ fun LocationsHubScreen(
                         },
                         expanded = active,
                         onExpandedChange = { active = it },
-                        placeholder = { Text("Поиск локации") },
+                        placeholder = { Text(stringResource(R.string.search_location)) },
                         leadingIcon = {
-                            Icon(Icons.Rounded.Search, contentDescription = "Поиск")
+                            Icon(Icons.Rounded.Search, contentDescription = "Search")
                         },
                         trailingIcon = {
                             if (active) {
@@ -170,7 +180,7 @@ fun LocationsHubScreen(
                                         focusManager.clearFocus()
                                     }
                                 }) {
-                                    Icon(Icons.Rounded.Close, contentDescription = "Очистить")
+                                    Icon(Icons.Rounded.Close, contentDescription = "Clear")
                                 }
                             }
                         }
@@ -200,13 +210,17 @@ fun LocationsHubScreen(
                             val isAlreadySaved = favorites.any {
                                 it.lat == item.lat && it.lon == item.lon
                             }
-
+                            val loginToSaveText = stringResource(R.string.location_failed)
                             SearchResultRow(
                                 item = item,
                                 isFavorite = isAlreadySaved,
                                 onAdd = {
                                     if (!isLoggedIn) {
-                                        scope.launch { snackbarHostState.showSnackbar("Войдите, чтобы сохранять локации") }
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                loginToSaveText
+                                            )
+                                        }
                                     } else {
                                         viewModel.addFavorite(item) {
                                             query = ""
@@ -239,18 +253,19 @@ fun LocationsHubScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "Ничего не найдено",
+                            stringResource(R.string.no_results),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             }
-
+            val undoText = stringResource(R.string.undo)
+            val removedText = stringResource(R.string.location_removed)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 32.dp)
             ) {
-                item { SectionTitle("GPS") }
+                item { SectionTitle(stringResource(R.string.gps_section)) }
 
                 item {
                     CurrentLocationCard(onClick = {
@@ -263,7 +278,7 @@ fun LocationsHubScreen(
                     })
                 }
 
-                item { SectionTitle("Сохранённые") }
+                item { SectionTitle(stringResource(R.string.saved_locations)) }
 
                 if (!isLoggedIn) {
                     item { GuestLoginCard(onLogin = onLoginClick) }
@@ -271,13 +286,14 @@ fun LocationsHubScreen(
                     if (favorites.isEmpty()) {
                         item {
                             Text(
-                                text = "У вас пока нет сохранённых локаций. Воспользуйтесь поиском выше.",
+                                text = stringResource(R.string.no_saved_locations),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                             )
                         }
                     } else {
+
                         items(favorites, key = { it.id }) { fav ->
                             FavoriteLocationItem(
                                 fav = fav,
@@ -287,8 +303,8 @@ fun LocationsHubScreen(
                                     viewModel.removeFavoriteLocally(fav)
                                     scope.launch {
                                         val result = snackbarHostState.showSnackbar(
-                                            message = "${fav.name} удалена",
-                                            actionLabel = "ОТМЕНА",
+                                            message = removedText,
+                                            actionLabel = undoText,
                                             duration = SnackbarDuration.Long
                                         )
                                         if (result == SnackbarResult.ActionPerformed) {

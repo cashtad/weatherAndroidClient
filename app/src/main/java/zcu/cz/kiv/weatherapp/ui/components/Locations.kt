@@ -34,11 +34,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import zcu.cz.kiv.weatherapp.R
 import zcu.cz.kiv.weatherapp.data.remote.dto.FavoriteLocationResponse
 import zcu.cz.kiv.weatherapp.data.remote.dto.GeoLocationDto
+
 
 @Composable
 fun SectionTitle(text: String) {
@@ -84,12 +87,12 @@ fun CurrentLocationCard(onClick: () -> Unit) {
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(
-                    text = "Текущая локация",
+                    text = stringResource(R.string.current_location),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Использовать GPS",
+                    text = stringResource(R.string.use_gps),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
@@ -140,7 +143,7 @@ fun FavoriteLocationItem(
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
-                Icon(Icons.Rounded.DeleteOutline, contentDescription = "Удалить")
+                Icon(Icons.Rounded.DeleteOutline, contentDescription = "Delete")
             }
         }
     }
@@ -173,12 +176,16 @@ fun SearchResultRow(
                     onClick = onAdd,
                     modifier = Modifier.size(32.dp)
                 ) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Добавить", modifier = Modifier.size(20.dp))
+                    Icon(
+                        Icons.Rounded.Add,
+                        contentDescription = "Add",
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             } else {
                 Icon(
                     Icons.Rounded.Check,
-                    contentDescription = "Уже добавлено",
+                    contentDescription = "Already added",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(end = 8.dp)
                 )
@@ -215,13 +222,13 @@ fun GuestLoginCard(onLogin: () -> Unit) {
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "Сохранение недоступно",
+                text = stringResource(R.string.saving_unavailable),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Войдите в аккаунт, чтобы сохранять любимые места и синхронизировать их.",
+                text = stringResource(R.string.login_to_sync),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
@@ -231,7 +238,7 @@ fun GuestLoginCard(onLogin: () -> Unit) {
                 onClick = onLogin,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Войти в аккаунт")
+                Text(stringResource(R.string.sign_in))
             }
         }
     }

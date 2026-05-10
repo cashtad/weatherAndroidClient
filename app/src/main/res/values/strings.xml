@@ -1,3 +1,109 @@
 <resources>
+
     <string name="app_name">WeatherApp</string>
+
+
+
+
+    <!-- Top bar -->
+    <string name="locations_title">Locations</string>
+
+    <!-- Search -->
+    <string name="search_location">Search location</string>
+    <string name="search">Search</string>
+    <string name="clear">Clear</string>
+    <string name="no_results">No results found</string>
+
+    <!-- Location permission / GPS -->
+    <string name="location_failed">Failed to get current location</string>
+    <string name="location_permission_denied">Location permission not granted</string>
+
+    <!-- Favorites / Auth -->
+    <string name="login_to_save">Sign in to save locations</string>
+    <string name="saved_locations">Saved locations</string>
+    <string name="no_saved_locations">
+        You don\'t have any saved locations yet. Use the search above.
+    </string>
+
+    <!-- Sections -->
+    <string name="gps_section">GPS</string>
+
+    <!-- Snackbar delete -->
+    <string name="undo">UNDO</string>
+
+
+
+    <!-- Locations components -->
+    <string name="current_location">Current location</string>
+    <string name="use_gps">Use GPS</string>
+
+    <string name="delete">Delete</string>
+    <string name="add">Add</string>
+    <string name="already_added">Already added</string>
+
+    <string name="saving_unavailable">Saving unavailable</string>
+    <string name="login_to_sync">
+    Sign in to save your favorite places and sync them across devices.
+</string>
+    <string name="sign_in">Sign in</string>
+
+    <!-- Weather Detailed Screen -->
+
+    <string name="weather_title">Weather</string>
+    <string name="cd_back">Back</string>
+    <string name="location_saved">Location saved</string>
+    <string name="location_removed">Removed from favorites</string>
+    <string name="save">Save</string>
+
+    <string name="forecast_24h">24-hour forecast</string>
+    <string name="week_forecast">Weekly forecast</string>
+    <string name="max_min_temp">Max: %1$d°, Min: %2$d°</string>
+
+    <string name="feels_like">Feels like</string>
+    <string name="uv_index">UV index</string>
+    <string name="wind">Wind</string>
+    <string name="humidity">Humidity</string>
+    <string name="sun">Sun</string>
+    <string name="pressure">Pressure</string>
+
+    <string name="wind_direction">Direction: %1$s</string>
+    <string name="wind_gusts">Gusts up to %1$d m/s</string>
+    <string name="dew_point">Dew point: %1$d°</string>
+    <string name="sunrise">Sunrise: %1$s</string>
+    <string name="sunset">Sunset: %1$s</string>
+    <string name="hpa">hPa</string>
+
+    <string name="uv_low">Low</string>
+    <string name="uv_moderate">Moderate</string>
+    <string name="uv_high">High</string>
+    <string name="uv_very_high">Very high</string>
+    <string name="uv_extreme">Extreme</string>
+
+    <string name="today">Today</string>
+
+    <string-array name="wind_directions">
+        <item>N</item>
+        <item>NE</item>
+        <item>E</item>
+        <item>SE</item>
+        <item>S</item>
+        <item>SW</item>
+        <item>W</item>
+        <item>NW</item>
+    </string-array>
+
+    <string name="weather_icon">Weather icon</string>
+
+
+    <string name="login_title">Login</string>
+    <string name="register_title">Register</string>
+
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+
+    <string name="login_button">Login</string>
+    <string name="create_account_button">Create account</string>
+
+    <string name="switch_to_register">Create account</string>
+    <string name="switch_to_login">Already have an account? Login</string>
 </resources>
