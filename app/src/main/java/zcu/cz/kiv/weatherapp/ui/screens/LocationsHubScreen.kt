@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.data.location.LocationProvider
@@ -125,9 +126,12 @@ fun LocationsHubScreen(
         label = "searchBarVerticalPadding"
     )
 
-
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Локации") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Локации", fontWeight = FontWeight.SemiBold) }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
 
@@ -136,7 +140,6 @@ fun LocationsHubScreen(
                 .padding(padding)
                 .fillMaxSize()
         ) {
-
             SearchBar(
                 windowInsets = WindowInsets(0.dp),
                 inputField = {
@@ -158,17 +161,15 @@ fun LocationsHubScreen(
                         },
                         trailingIcon = {
                             if (active) {
-                                IconButton(
-                                    onClick = {
-                                        if (query.isNotEmpty()) {
-                                            query = ""
-                                            viewModel.onSearchQueryChanged("")
-                                        } else {
-                                            active = false
-                                            focusManager.clearFocus()
-                                        }
+                                IconButton(onClick = {
+                                    if (query.isNotEmpty()) {
+                                        query = ""
+                                        viewModel.onSearchQueryChanged("")
+                                    } else {
+                                        active = false
+                                        focusManager.clearFocus()
                                     }
-                                ) {
+                                }) {
                                     Icon(Icons.Rounded.Close, contentDescription = "Очистить")
                                 }
                             }
@@ -187,9 +188,7 @@ fun LocationsHubScreen(
                             .fillMaxWidth()
                             .padding(32.dp),
                         contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    ) { CircularProgressIndicator() }
                 } else if (results.isNotEmpty()) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -197,15 +196,17 @@ fun LocationsHubScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(results) { item ->
+
+                            val isAlreadySaved = favorites.any {
+                                it.lat == item.lat && it.lon == item.lon
+                            }
+
                             SearchResultRow(
                                 item = item,
+                                isFavorite = isAlreadySaved,
                                 onAdd = {
                                     if (!isLoggedIn) {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                "Войдите, чтобы сохранять локации"
-                                            )
-                                        }
+                                        scope.launch { snackbarHostState.showSnackbar("Войдите, чтобы сохранять локации") }
                                     } else {
                                         viewModel.addFavorite(item) {
                                             query = ""
@@ -238,8 +239,7 @@ fun LocationsHubScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Ничего не найдено",
-                            style = MaterialTheme.typography.bodyLarge,
+                            "Ничего не найдено",
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -248,9 +248,10 @@ fun LocationsHubScreen(
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                contentPadding = PaddingValues(bottom = 32.dp)
             ) {
-                item { SectionTitle("Текущая локация") }
+                item { SectionTitle("GPS") }
+
                 item {
                     CurrentLocationCard(onClick = {
                         locationPermission.launch(
@@ -267,28 +268,38 @@ fun LocationsHubScreen(
                 if (!isLoggedIn) {
                     item { GuestLoginCard(onLogin = onLoginClick) }
                 } else {
-                    items(favorites, key = { it.id }) { fav ->
-                        FavoriteLocationItem(
-                            fav = fav,
-                            onClick = { onLocationClick(fav.toLocation()) },
-                            onDelete = {
-                                viewModel.removeFavoriteLocally(fav)
-
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = "Локация убрана из сохранённых",
-                                        actionLabel = "ОТМЕНА",
-                                        duration = SnackbarDuration.Long
-                                    )
-
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel.undoDelete()
-                                    } else {
-                                        viewModel.confirmDeleteFavorite()
+                    if (favorites.isEmpty()) {
+                        item {
+                            Text(
+                                text = "У вас пока нет сохранённых локаций. Воспользуйтесь поиском выше.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                            )
+                        }
+                    } else {
+                        items(favorites, key = { it.id }) { fav ->
+                            FavoriteLocationItem(
+                                fav = fav,
+                                modifier = Modifier.animateItem(),
+                                onClick = { onLocationClick(fav.toLocation()) },
+                                onDelete = {
+                                    viewModel.removeFavoriteLocally(fav)
+                                    scope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = "${fav.name} удалена",
+                                            actionLabel = "ОТМЕНА",
+                                            duration = SnackbarDuration.Long
+                                        )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            viewModel.undoDelete()
+                                        } else {
+                                            viewModel.confirmDeleteFavorite()
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -296,15 +307,9 @@ fun LocationsHubScreen(
     }
 }
 
-
 private fun FavoriteLocationResponse.toLocation(): Location {
     return Location(
-        name = name,
-        country = country,
-        state = state,
-        lat = lat,
-        lon = lon,
-        displayName = displayName,
-        isFromGps = false
+        name = name, country = country, state = state, lat = lat, lon = lon,
+        displayName = displayName, isFromGps = false
     )
 }
