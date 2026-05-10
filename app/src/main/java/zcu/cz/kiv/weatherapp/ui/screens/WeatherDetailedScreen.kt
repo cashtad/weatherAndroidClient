@@ -250,7 +250,7 @@ private fun DailySection(days: List<WeatherResponse.Daily>) {
 
 @Composable
 fun CurrentWeatherHeader(current: WeatherResponse.Current?, todayMax: Double?, todayMin: Double?) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         val temp = current?.temp?.roundToInt()?.toString() ?: "--"
         val desc = current?.weather?.firstOrNull()?.description ?: "—"
 
