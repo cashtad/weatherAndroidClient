@@ -1,21 +1,62 @@
 package zcu.cz.kiv.weatherapp.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.rounded.Air
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.Compress
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Thermostat
+import androidx.compose.material.icons.rounded.WaterDrop
+import androidx.compose.material.icons.rounded.WbSunny
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -25,7 +66,10 @@ import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.R
 import zcu.cz.kiv.weatherapp.data.remote.dto.GeoLocationDto
 import zcu.cz.kiv.weatherapp.data.remote.dto.WeatherResponse
-import zcu.cz.kiv.weatherapp.ui.viewmodel.*
+import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
+import zcu.cz.kiv.weatherapp.ui.viewmodel.AuthViewModel
+import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel
+import zcu.cz.kiv.weatherapp.ui.viewmodel.WeatherViewModel
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -111,7 +155,8 @@ fun WeatherDetailScreen(
                                 locationsViewModel.deleteFavorite(fav.id) {
                                     scope.launch {
                                         snackbarHostState.showSnackbar(
-                                            locationRemovedText                                        )
+                                            locationRemovedText
+                                        )
                                     }
                                 }
                             }
@@ -251,6 +296,8 @@ fun HourlyForecastItem(hour: WeatherResponse.Hourly) {
 @Composable
 fun DailyForecastRow(day: WeatherResponse.Daily) {
     val iconCode = day.weather.firstOrNull()?.icon
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -259,7 +306,10 @@ fun DailyForecastRow(day: WeatherResponse.Daily) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = formatDay(day.dt),
+            text = formatDay(
+                context = context,
+                epoch = day.dt,
+            ),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
@@ -289,10 +339,13 @@ fun DailyForecastRow(day: WeatherResponse.Daily) {
 
 @Composable
 fun WeatherDetailsGrid(current: WeatherResponse.Current) {
+    val context = LocalContext.current
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DetailCard(
-                title = "Ощущается как",
+                title = stringResource(R.string.feels_like),
                 icon = Icons.Rounded.Thermostat,
                 modifier = Modifier.weight(1f)
             ) {
@@ -304,7 +357,7 @@ fun WeatherDetailsGrid(current: WeatherResponse.Current) {
             }
 
             DetailCard(
-                title = "УФ-индекс",
+                title = stringResource(R.string.uv_index),
                 icon = Icons.Rounded.WbSunny,
                 modifier = Modifier.weight(1f)
             ) {
@@ -323,7 +376,7 @@ fun WeatherDetailsGrid(current: WeatherResponse.Current) {
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 Text(
-                    text = getUvDescription(current.uvi),
+                    text = getUvDescription(context, current.uvi),
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(top = 4.dp)
                 )
@@ -332,29 +385,32 @@ fun WeatherDetailsGrid(current: WeatherResponse.Current) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DetailCard(
-                title = "Ветер",
+                title = stringResource(R.string.wind),
                 icon = Icons.Rounded.Air,
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "${current.windSpeed.roundToInt()} м/с",
+                    text = stringResource(R.string.wind_speed, current.windSpeed.roundToInt()),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Направление: ${getWindDirection(current.windDeg)}",
+                    text = stringResource(
+                        R.string.wind_direction,
+                        getWindDirection(context, current.windDeg)
+                    ),
                     style = MaterialTheme.typography.bodySmall
                 )
                 if (current.windGust != null) {
                     Text(
-                        text = "Порывы до ${current.windGust.roundToInt()} м/с",
+                        text = stringResource(R.string.wind_gust, current.windGust.roundToInt()),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
 
             DetailCard(
-                title = "Влажность",
+                title = stringResource(R.string.humidity),
                 icon = Icons.Rounded.WaterDrop,
                 modifier = Modifier.weight(1f)
             ) {
@@ -364,7 +420,7 @@ fun WeatherDetailsGrid(current: WeatherResponse.Current) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Точка росы: ${current.dewPoint.roundToInt()}°",
+                    text = stringResource(R.string.dew_point, current.dewPoint.roundToInt()),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -372,35 +428,41 @@ fun WeatherDetailsGrid(current: WeatherResponse.Current) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DetailCard(
-                title = "Солнце",
+                title = stringResource(R.string.sun),
                 icon = Icons.Rounded.LightMode,
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "Рассвет: ${current.sunrise?.let { formatHour(it) } ?: "--"}",
+                    text = stringResource(
+                        R.string.sunrise,
+                        current.sunrise?.let { formatHour(it) } ?: "--"
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Закат: ${current.sunset?.let { formatHour(it) } ?: "--"}",
+                    text = stringResource(
+                        R.string.sunset,
+                        current.sunset?.let { formatHour(it) } ?: "--"
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
             }
 
             DetailCard(
-                title = "Давление",
+                title = stringResource(R.string.pressure),
                 icon = Icons.Rounded.Compress,
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "${current.pressure}",
+                    text = current.pressure.toString(),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "гПа",
+                    text = stringResource(R.string.hpa),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -450,24 +512,28 @@ private fun formatHour(epoch: Long): String =
         .atZone(ZoneId.systemDefault())
         .format(DateTimeFormatter.ofPattern("HH:mm"))
 
-private fun formatDay(epoch: Long): String {
+private fun formatDay(context: Context, epoch: Long): String {
     val date = Instant.ofEpochSecond(epoch).atZone(ZoneId.systemDefault())
     val today = Instant.now().atZone(ZoneId.systemDefault()).dayOfYear
-    return if (date.dayOfYear == today) "Сегодня" else date.format(DateTimeFormatter.ofPattern("EEE, d MMM"))
+
+    return if (date.dayOfYear == today)
+        context.getString(R.string.today)
+    else
+        date.format(DateTimeFormatter.ofPattern("EEE, d MMM"))
 }
 
-private fun getWindDirection(deg: Int): String {
-    val directions = arrayOf("С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ")
+private fun getWindDirection(context: Context, deg: Int): String {
+    val directions = context.resources.getStringArray(R.array.wind_directions)
     val index = ((deg / 45.0) + 0.5).toInt() % 8
     return directions[index]
 }
 
-private fun getUvDescription(uvi: Double): String = when {
-    uvi < 3 -> "Низкий"
-    uvi < 6 -> "Умеренный"
-    uvi < 8 -> "Высокий"
-    uvi < 11 -> "Очень высокий"
-    else -> "Экстремальный"
+private fun getUvDescription(context: Context, uvi: Double): String = when {
+    uvi < 3 -> context.getString(R.string.uv_low)
+    uvi < 6 -> context.getString(R.string.uv_moderate)
+    uvi < 8 -> context.getString(R.string.uv_high)
+    uvi < 11 -> context.getString(R.string.uv_very_high)
+    else -> context.getString(R.string.uv_extreme)
 }
 
 @Composable

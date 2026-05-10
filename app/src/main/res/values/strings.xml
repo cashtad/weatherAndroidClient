@@ -67,7 +67,7 @@
     <string name="pressure">Pressure</string>
 
     <string name="wind_direction">Direction: %1$s</string>
-    <string name="wind_gusts">Gusts up to %1$d m/s</string>
+    <string name="wind_gust">Gusts up to %1$d m/s</string>
     <string name="dew_point">Dew point: %1$d°</string>
     <string name="sunrise">Sunrise: %1$s</string>
     <string name="sunset">Sunset: %1$s</string>
@@ -80,6 +80,8 @@
     <string name="uv_extreme">Extreme</string>
 
     <string name="today">Today</string>
+
+    <string name="wind_speed">%1$d m/s</string>
 
     <string-array name="wind_directions">
         <item>N</item>
