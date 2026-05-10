@@ -2,11 +2,10 @@ package zcu.cz.kiv.weatherapp.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import zcu.cz.kiv.weatherapp.ui.screens.AuthScreen
 import zcu.cz.kiv.weatherapp.ui.screens.LocationsHubScreen
-import zcu.cz.kiv.weatherapp.ui.screens.WeatherDetailScreen
+import zcu.cz.kiv.weatherapp.ui.screens.weather.WeatherDetailScreen
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AuthViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel

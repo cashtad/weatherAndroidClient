@@ -305,7 +305,7 @@ fun LocationsHubScreen(
                                         val result = snackbarHostState.showSnackbar(
                                             message = removedText,
                                             actionLabel = undoText,
-                                            duration = SnackbarDuration.Long
+                                            duration = SnackbarDuration.Short
                                         )
                                         if (result == SnackbarResult.ActionPerformed) {
                                             viewModel.undoDelete()
