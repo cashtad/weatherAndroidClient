@@ -1,9 +1,21 @@
 package zcu.cz.kiv.weatherapp.ui.screens
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import zcu.cz.kiv.weatherapp.R
-
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -11,10 +23,34 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.rounded.Air
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.Compress
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Thermostat
+import androidx.compose.material.icons.rounded.WaterDrop
+import androidx.compose.material.icons.rounded.WbSunny
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,8 +59,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
+import zcu.cz.kiv.weatherapp.R
 import zcu.cz.kiv.weatherapp.data.remote.dto.GeoLocationDto
 import zcu.cz.kiv.weatherapp.data.remote.dto.WeatherResponse
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AppViewModel
@@ -83,10 +119,19 @@ fun WeatherDetailScreen(
 
                                 if (!isFavorite) {
                                     locationsViewModel.addFavorite(
-                                        GeoLocationDto(loc.name, loc.country, loc.state, loc.lat, loc.lon, loc.displayName)
+                                        GeoLocationDto(
+                                            loc.name,
+                                            loc.country,
+                                            loc.state,
+                                            loc.lat,
+                                            loc.lon,
+                                            loc.displayName
+                                        )
                                     ) { scope.launch { snackbarHostState.showSnackbar("Локация сохранена") } }
                                 } else {
-                                    val fav = favorites.firstOrNull { it.lat == loc.lat && it.lon == loc.lon } ?: return@IconButton
+                                    val fav =
+                                        favorites.firstOrNull { it.lat == loc.lat && it.lon == loc.lon }
+                                            ?: return@IconButton
                                     locationsViewModel.deleteFavorite(fav.id) {
                                         scope.launch { snackbarHostState.showSnackbar("Удалено из сохранённых") }
                                     }
@@ -127,7 +172,11 @@ fun WeatherDetailScreen(
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                    alpha = 0.5f
+                                )
+                            )
                         ) {
                             Column(modifier = Modifier.padding(vertical = 16.dp)) {
                                 Text(
@@ -153,7 +202,11 @@ fun WeatherDetailScreen(
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                    alpha = 0.5f
+                                )
+                            )
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
@@ -164,7 +217,11 @@ fun WeatherDetailScreen(
                                 )
                                 state.daily!!.forEach { day ->
                                     DailyForecastRow(day)
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.onSurface.copy(
+                                            alpha = 0.1f
+                                        )
+                                    )
                                 }
                             }
                         }
@@ -191,7 +248,8 @@ fun CurrentWeatherHeader(current: WeatherResponse.Current?, todayMax: Double?, t
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val temp = current?.temp?.roundToInt()?.toString() ?: "--"
-        val desc = current?.weather?.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: "—"
+        val desc =
+            current?.weather?.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: "—"
 
         Text(
             text = "$temp°",
@@ -308,7 +366,9 @@ fun WeatherDetailsGrid(current: WeatherResponse.Current) {
                 Spacer(modifier = Modifier.height(4.dp))
                 LinearProgressIndicator(
                     progress = { (current.uvi / 11f).toFloat().coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(4.dp)),
                     color = getUvColor(current.uvi),
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
@@ -407,7 +467,11 @@ fun DetailCard(
 ) {
     Card(
         modifier = modifier.aspectRatio(1f),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                alpha = 0.5f
+            )
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -482,7 +546,7 @@ fun getWeatherIconRes(iconCode: String?): Int {
         "10n" -> R.drawable.ic_10n
         "11d" -> R.drawable.ic_11d
         "11n" -> R.drawable.ic_11n
-        "13d"-> R.drawable.ic_13d
+        "13d" -> R.drawable.ic_13d
         "13n" -> R.drawable.ic_13n
         "50d" -> R.drawable.ic_50d
         "50n" -> R.drawable.ic_50n
