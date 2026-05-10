@@ -82,6 +82,13 @@ fun AuthScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            if (error != null) {
+                Text(
+                    error!!,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
             Button(
                 onClick = {
                     if (isLogin) {
@@ -112,14 +119,6 @@ fun AuthScreen(
                         stringResource(R.string.switch_to_register)
                     else
                         stringResource(R.string.switch_to_login)
-                )
-            }
-
-            if (error != null) {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    error!!,
-                    color = MaterialTheme.colorScheme.error
                 )
             }
         }

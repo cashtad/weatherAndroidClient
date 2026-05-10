@@ -10,7 +10,6 @@ import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.data.WeatherRepository
 import zcu.cz.kiv.weatherapp.data.model.Location
 import zcu.cz.kiv.weatherapp.data.remote.dto.WeatherResponse
-import zcu.cz.kiv.weatherapp.data.remote.userMessage
 
 data class WeatherUiState(
     val loading: Boolean = false,
@@ -39,7 +38,7 @@ class WeatherViewModel(app: Application) : AndroidViewModel(app) {
             val error = listOf(allResult)
                 .mapNotNull { it.exceptionOrNull() }
                 .firstOrNull()
-                ?.userMessage()
+                ?.message
 
             _state.value = WeatherUiState(
                 loading = false,

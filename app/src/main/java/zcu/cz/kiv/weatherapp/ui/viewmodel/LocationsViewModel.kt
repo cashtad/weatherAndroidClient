@@ -13,7 +13,6 @@ import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.data.LocationRepository
 import zcu.cz.kiv.weatherapp.data.remote.dto.FavoriteLocationResponse
 import zcu.cz.kiv.weatherapp.data.remote.dto.GeoLocationDto
-import zcu.cz.kiv.weatherapp.data.remote.userMessage
 
 class LocationsViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -67,7 +66,7 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
 
         repo.search(query)
             .onSuccess { _searchResults.value = it }
-            .onFailure { _error.value = it.userMessage() }
+            .onFailure { _error.value = it.message }
 
         _loading.value = false
     }
@@ -79,7 +78,7 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
 
             repo.getFavorites()
                 .onSuccess { _favorites.value = it }
-                .onFailure { _error.value = it.userMessage() }
+                .onFailure { _error.value = it.message }
 
             _loading.value = false
         }
@@ -95,7 +94,7 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
                     loadFavorites()
                     onDone()
                 }
-                .onFailure { _error.value = it.userMessage() }
+                .onFailure { _error.value = it.message }
 
             _loading.value = false
         }
@@ -112,7 +111,7 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
                     onDone()
                 }
                 .onFailure {
-                    _error.value = it.userMessage()
+                    _error.value = it.message
                 }
 
             _loading.value = false
@@ -129,7 +128,7 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
 
         viewModelScope.launch {
             repo.deleteFavorite(fav.id)
-                .onFailure { _error.value = it.userMessage() }
+                .onFailure { _error.value = it.message }
         }
 
         recentlyDeleted = null

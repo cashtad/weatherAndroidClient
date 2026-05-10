@@ -1,6 +1,7 @@
 package zcu.cz.kiv.weatherapp.ui.screens.weather
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +35,7 @@ fun WeatherDetailScreen(
     val state by weatherViewModel.state.collectAsState()
     val favorites by locationsViewModel.favorites.collectAsState()
     val isLoggedIn = authViewModel.isLoggedIn()
+    val error = state.error
 
     val isFavorite = favorites.any { it.lat == location?.lat && it.lon == location?.lon }
     val loginToSaveText = stringResource(R.string.login_to_save)
@@ -42,6 +44,12 @@ fun WeatherDetailScreen(
 
     LaunchedEffect(location) {
         location?.let { weatherViewModel.load(it) }
+    }
+
+    LaunchedEffect(error) {
+        if (error != null) {
+            snackbarHostState.showSnackbar(error, duration = SnackbarDuration.Short)
+        }
     }
 
     WeatherDetailContent(

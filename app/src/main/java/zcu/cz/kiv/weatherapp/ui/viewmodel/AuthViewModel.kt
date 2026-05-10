@@ -7,8 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import zcu.cz.kiv.weatherapp.data.AuthRepository
-import zcu.cz.kiv.weatherapp.data.model.Location
-import zcu.cz.kiv.weatherapp.data.remote.userMessage
 
 class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -27,7 +25,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
             _error.value = null
             repo.login(email, password)
                 .onSuccess { onSuccess() }
-                .onFailure { _error.value = it.userMessage() }
+                .onFailure { _error.value = it.message }
             _loading.value = false
         }
     }
@@ -38,7 +36,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
             _error.value = null
             repo.register(email, password)
                 .onSuccess { onSuccess() }
-                .onFailure { _error.value = it.userMessage() }
+                .onFailure { _error.value = it.message }
             _loading.value = false
         }
     }
