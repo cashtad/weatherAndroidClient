@@ -57,7 +57,6 @@ import zcu.cz.kiv.weatherapp.ui.components.FavoriteLocationItem
 import zcu.cz.kiv.weatherapp.ui.components.GuestLoginCard
 import zcu.cz.kiv.weatherapp.ui.components.SearchResultRow
 import zcu.cz.kiv.weatherapp.ui.components.SectionTitle
-import zcu.cz.kiv.weatherapp.ui.util.locationFromCoords
 import zcu.cz.kiv.weatherapp.ui.viewmodel.AuthViewModel
 import zcu.cz.kiv.weatherapp.ui.viewmodel.LocationsViewModel
 
@@ -94,7 +93,15 @@ fun LocationsHubScreen(
             scope.launch {
                 val loc = locationProvider.getCurrentLocation()
                 if (loc != null) {
-                    val location = locationFromCoords(loc.latitude, loc.longitude)
+                    val location = Location(
+                        name = "Current location",
+                        country = null,
+                        state = null,
+                        lat = loc.latitude,
+                        lon = loc.longitude,
+                        displayName = "Current location",
+                        isFromGps = true
+                    )
                     onLocationClick(location)
                 } else {
                     snackbarHostState.showSnackbar(locationPermissionFailedText)
