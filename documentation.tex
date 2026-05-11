@@ -14,59 +14,54 @@
 \maketitle
 
 \section{Úvod}
-Tato práce popisuje mobilní aplikaci \textit{WeatherApp} pro Android. Cílem je stručně vysvětlit, jak je aplikace navržena, jak funguje z pohledu uživatele a jaká rozhodnutí byla udělána při návrhu rozhraní. Dokumentace se soustředí na hlavní principy, ne na popis každého řádku kódu.
+Tato práce popisuje mobilní aplikaci \textit{WeatherApp} pro Android. Smyslem dokumentace není rozebírat každou část zdrojového kódu zvlášť, ale srozumitelně vysvětlit, jak je aplikace navržená, jaké má hlavní funkce a jaké návrhové úvahy stály za jejím výsledným tvarem. Důležitou součástí práce je také uživatelská zkušenost, protože právě u aplikace na počasí rozhoduje přehlednost, rychlost orientace a kvalita interakce o tom, jestli bude aplikace skutečně příjemná na každodenní používání.
 
-\section{Co aplikace řeší}
-Aplikace umožňuje:
-\begin{itemize}
-    \item vyhledat libovolné město,
-    \item použít aktuální GPS polohu,
-    \item zobrazit aktuální počasí, hodinovou a týdenní předpověď,
-    \item po přihlášení ukládat oblíbené lokality.
-\end{itemize}
+WeatherApp umožňuje vyhledávat lokality, pracovat s aktuální GPS polohou, zobrazit detail počasí a po přihlášení ukládat oblíbená místa. Z technického hlediska jde o aplikaci napsanou v Kotlinu s využitím Jetpack Compose, navigace mezi obrazovkami, viewmodelů a samostatné datové vrstvy napojené na backend API.
 
-Z hlediska uživatelského scénáře jde o jednoduchý tok: uživatel vybere lokalitu na hlavní obrazovce, otevře detail počasí, případně si místo uloží mezi oblíbené.
+\section{Funkční přehled aplikace}
+Uživatel po spuštění vstupuje na hlavní obrazovku lokalit. Zde má tři základní možnosti: může vyhledat místo podle názvu, použít aktuální polohu zařízení nebo pracovat s uloženými oblíbenými lokalitami. Pokud není přihlášený, aplikace mu i tak umožní hledat a prohlížet počasí, ale ukládání oblíbených míst zůstává vyhrazené až pro autentizovaného uživatele.
 
-\section{Stručný technický přehled}
-Aplikace je postavená v Kotlinu s využitím Jetpack Compose. Struktura je rozdělena do tří hlavních vrstev:
-\begin{itemize}
-    \item \textbf{UI vrstva} (\textit{screens, components}) --- skládá obrazovky a reaguje na stav.
-    \item \textbf{ViewModel vrstva} --- drží stav obrazovek, spouští asynchronní operace a propojuje UI s repozitáři.
-    \item \textbf{Data vrstva} (\textit{repositories, remote, local}) --- komunikuje s backend API přes Retrofit a řeší lokální uložení tokenu a poslední zvolené lokality.
-\end{itemize}
+Po výběru konkrétní lokality se otevře detail počasí. Ten je rozdělený do několika přehledných bloků: nahoře je aktuální stav s teplotou a stručným popisem, následuje 24hodinová předpověď, týdenní přehled a doplňkové metriky jako pocitová teplota, UV index, vítr, vlhkost, východ a západ slunce nebo tlak. Díky tomu uživatel dostane rychlý přehled i podrobnější kontext bez nutnosti přecházet mezi dalšími obrazovkami.
 
-Navigace je řešena přes tři hlavní obrazovky: centrum lokalit, detail počasí a autentizace. Na síťové vrstvě je centrální obsluha chyb, která převádí technické výjimky na uživatelsky čitelná hlášení.
+Přihlášený uživatel si může vybranou lokaci uložit mezi oblíbené nebo ji z uložených míst odebrat. Na hlavní obrazovce je pak seznam uložených lokalit doplněný možností smazání s krátkým časovým oknem pro vrácení akce. Z pohledu používání aplikace je tedy hlavní tok jednoduchý: vybrat místo, zobrazit počasí, případně si lokaci ponechat pro pozdější rychlý přístup.
 
-\section{UX/UI: inspirace iOS a realita Androidu}
-Na začátku vývoje jsem se silně inspiroval UX a vizuálním stylem aplikace Počasí na iOS. iOS varianta působí velmi plynule, má výraznou hierarchii informací a konzistentní animace napříč celým systémem. Cílem bylo přenést podobný pocit přehlednosti i do Android aplikace.
+\section{Architektura a dekompozice}
+Aplikace je rozdělená do několika jasně oddělených vrstev. První z nich je UI vrstva, která obsahuje celé obrazovky a menší znovupoužitelné komponenty. Mezi hlavní obrazovky patří \textit{LocationsHubScreen}, \textit{AuthScreen} a \textit{WeatherDetailScreen}. Tyto obrazovky jsou dále rozložené na menší části, například karty pro aktuální polohu, řádky výsledků hledání, horní lištu detailu počasí, sekci hodinové předpovědi nebo mřížku detailních meteorologických údajů. Tato dekompozice pomáhá udržet kód přehledný a zároveň usnadňuje návrh rozhraní, protože každá komponenta řeší jen jeden konkrétní úkol.
 
-Během implementace se ale ukázalo, že na Androidu je dosažení stejného výsledku složitější. Hlavní důvod je, že pro část iOS chování neexistují v Androidu připravené konstrukce ve stejném rozsahu. U iOS jsou některé interakce a komponenty více sjednocené napříč systémem, zatímco na Androidu je potřeba více věcí skládat ručně a přizpůsobovat je konkrétní kombinaci knihoven a verzí.
+Druhou vrstvu tvoří viewmodely. \textit{AppViewModel} drží aktuálně vybranou lokaci, \textit{AuthViewModel} řeší přihlášení a registraci, \textit{LocationsViewModel} zpracovává vyhledávání a správu oblíbených míst a \textit{WeatherViewModel} obstarává načítání detailu počasí. Viewmodely představují spojovací článek mezi uživatelským rozhraním a datovou vrstvou. Díky tomu obrazovky pouze reagují na stav a neobsahují síťovou nebo perzistentní logiku přímo v sobě.
 
-To se projevilo hlavně v detailech práce s top barem, vyhledáváním, přechody mezi stavy obrazovek a celkovým ``pocitem'' z animací. Výsledkem nebyla snaha kopírovat iOS 1:1, ale navrhnout UX, které respektuje androidí zvyklosti a zároveň si bere inspiraci v čistotě a prioritizaci informací.
+Ve spodní vrstvě stojí repozitáře a pomocné třídy pro práci s daty. \textit{AuthRepository}, \textit{LocationRepository} a \textit{WeatherRepository} komunikují s API přes Retrofit. Lokální data jsou uložená odděleně: autentizační token je uchováván v \textit{EncryptedSharedPreferences} přes třídu \textit{TokenStore}, zatímco naposledy zvolená lokalita se ukládá v \textit{LocationStore}. Díky tomuto rozdělení má aplikace poměrně čistou strukturu, kde je dobře vidět odpovědnost jednotlivých částí.
 
-\section{Studium Android designových praktik}
-V průběhu vývoje jsem postupně studoval běžné Android postupy:
-\begin{itemize}
-    \item návrh obrazovek přes Compose a stavově řízené UI,
-    \item práci s ViewModel a \textit{StateFlow},
-    \item oddělení síťové logiky do repozitářů,
-    \item material design principy (hierarchie, typografie, karty, průběžná zpětná vazba).
-\end{itemize}
+\section{Práce s API, daty a interními modely}
+Síťová komunikace je soustředěná do rozhraní \textit{ApiService} a klienta \textit{RetrofitClient}. Klient používá Retrofit s Moshi pro převod JSON odpovědí do datových tříd a zároveň obsahuje nakonfigurovaný \textit{OkHttpClient} s timeouty, logováním požadavků a povoleným opakováním spojení při síťovém výpadku. Z pohledu architektury jde o poměrně přímočaré řešení: viewmodel zavolá repozitář, repozitář zavolá konkrétní endpoint a výsledek se vrátí zpět do stavové vrstvy.
 
-Oproti iOS přístupu je v Android světě větší důraz na variabilitu zařízení a explicitní práci se stavem. Prakticky to znamená, že návrh musí více počítat s různými šířkami displeje, rozdílným systémovým chováním a širší škálou uživatelských scénářů. V iOS ekosystému bývá implementační cesta často přímočařejší díky vyšší unifikaci prostředí.
+Důležitou roli zde hraje funkce \textit{safeApiCall}. Ta obaluje síťové volání do jednotného mechanismu pro zachytávání chyb. Pokud volání proběhne úspěšně, vrátí se \textit{Result.success}. Pokud nastane problém, funkce zachytí výjimku, pokusí se ji převést na čitelnou zprávu a vrátí \textit{Result.failure}. Pro HTTP chyby se z těla odpovědi čte strukturovaná chybová zpráva, u síťových výpadků se uživateli vrací srozumitelná informace o tom, že se nepodařilo spojit se serverem. Výhodou tohoto přístupu je, že viewmodely nemusí řešit rozptýlené \textit{try/catch} bloky na více místech a práce s chybovými stavy je v celé aplikaci konzistentní.
 
-\section{Finální UX aplikace}
-Finální uživatelská zkušenost je postavená na jednoduchosti:
-\begin{enumerate}
-    \item Uživatel vstoupí na obrazovku lokalit.
-    \item Může okamžitě použít GPS, nebo vyhledat město.
-    \item Po výběru vidí detail počasí: aktuální stav, 24hodinovou předpověď, týdenní výhled a doplňkové metriky.
-    \item Přihlášený uživatel si může lokaci uložit či odebrat z oblíbených.
-\end{enumerate}
+Vyhledávání lokality funguje tak, že uživatel zadá název místa do vyhledávacího pole na hlavní obrazovce. \textit{LocationsViewModel} po krátkém zpoždění odešle dotaz na endpoint pro vyhledávání a API vrátí seznam odpovídajících lokalit včetně názvu, státu, zeměpisné šířky a délky a textové reprezentace místa. Tyto výsledky se v aplikaci zobrazí jako nabídka odpovídajících lokalit. V okamžiku, kdy uživatel jednu z nich vybere, převede se výsledek do interního objektu třídy \textit{Location}, se kterým pak pracuje zbytek aplikace při otevření detailu počasí.
 
-Rozhraní je navrženo tak, aby klíčové informace byly vidět bez zbytečných kroků. Důležitou roli hraje průběžná zpětná vazba: načítání dat, chybové hlášky a potvrzení akcí (například uložení/odebrání lokality) jsou zobrazené přímo v kontextu obrazovky.
+Model \textit{Location} obsahuje název, stát, zemi, souřadnice, zobrazovaný název a příznak \textit{isFromGps}. Tento příznak je důležitý pro rozlišení, jestli byla lokalita získaná z vyhledávání, nebo z aktuální polohy telefonu. Pokud si uživatel vybere počasí pro svou současnou polohu, aplikace vytvoří objekt \textit{Location} s názvem a zobrazovaným textem \textit{Current location}, bez konkrétního názvu města, a nastaví \textit{isFromGps = true}. Taková lokalita je určená pouze pro okamžité zobrazení počasí. V detailu počasí se proto pro ni nezobrazuje možnost uložení mezi oblíbené, protože nejde o běžně vybranou pojmenovanou lokaci ze seznamu.
 
-\section{Závěr}
-Vývoj ukázal, že inspirace iOS je užitečná jako kvalitativní cíl, ale finální řešení musí respektovat specifika Android platformy. Výsledná aplikace proto kombinuje čisté rozvržení informací inspirované iOS přístupem s praktickými Android postupy, které jsou dlouhodobě udržitelné a dobře rozšiřitelné.
+Samostatnou část tvoří práce s ikonami počasí. Ikony jsou uložené jako obrázky ve složce \textit{drawable} pod názvy odpovídajícími kódům počasí, například \textit{ic\_01d}, \textit{ic\_10n} nebo \textit{ic\_50d}. Pomocná funkce \textit{getWeatherIconRes} mapuje kód vrácený API na konkrétní drawable resource. Komponenta \textit{WeatherIcon} pak přes \textit{painterResource} načte správný obrázek a zobrazí ho v rozhraní. Pokud by API vrátilo neznámý kód, použije se náhradní ikona \textit{ic\_unknown}. Díky tomu je vazba mezi daty z API a vizuální reprezentací jednoduchá, čitelná a snadno rozšiřitelná.
+
+\section{Manifest, oprávnění a systémové vazby}
+Soubor \textit{AndroidManifest.xml} deklaruje základní vlastnosti aplikace i její vazby na systém Android. Manifest uvádí hlavní aktivitu \textit{MainActivity} jako vstupní bod aplikace a registruje ji jako launcher aktivitu, takže se aplikace po instalaci chová jako běžná samostatná mobilní aplikace spustitelná z menu telefonu.
+
+Z hlediska oprávnění aplikace požaduje tři důležité položky: \textit{INTERNET}, \textit{ACCESS\_FINE\_LOCATION} a \textit{ACCESS\_COARSE\_LOCATION}. Přístup k internetu je nezbytný pro komunikaci s backend API. Jemná i přibližná poloha jsou potřeba pro scénář, kdy si uživatel chce zobrazit počasí podle své aktuální polohy. Aplikace tato oprávnění nevyužívá agresivně, ale žádá o ně až ve chvíli, kdy uživatel sám zvolí práci s GPS. Pokud oprávnění neudělí nebo se polohu nepodaří získat, aplikace místo pádu pouze zobrazí chybové hlášení.
+
+Manifest zároveň odkazuje na \textit{network\_security\_config}, kde je v této verzi povolený cleartext provoz. To odpovídá tomu, že backend běží při vývoji na lokální adrese \textit{10.0.2.2}. Dále jsou zde uvedené informace o ikonách aplikace, tématu, zálohování a pravidlech pro extrakci dat. Jde tedy nejen o seznam formálních deklarací, ale o místo, kde je vidět základní provozní nastavení celé aplikace.
+
+\section{UX/UI: inspirace, srovnání a platformní rozdíly}
+Na začátku návrhu jsem se výrazně inspiroval standardní aplikací Počasí na iOS. Důvod byl jednoduchý: z pohledu UX jde o velmi dotažený produkt, který umí skloubit výraznou vizuální čistotu s dobrým řazením informací. Uživatel dostane rychle to nejdůležitější, ale zároveň má pocit, že detailní data jsou stále přirozeně po ruce. Právě tento dojem lehkosti a plynulosti byl jedním z hlavních cílů i při návrhu Android verze.
+
+Postupně se ale ukázalo, že dosáhnout stejného výsledku na Androidu není otázkou prostého přepisu. Standardní aplikace počasí na iOS a běžná podoba počasí na zařízeních Google Pixel vycházejí z odlišných systémových zvyklostí. iOS více sází na sjednocený vizuální jazyk a velmi uhlazené systémové chování komponent. Android, zejména v prostředí Material Designu, je naopak praktičtější, modulárnější a více svázaný s komponentovým skládáním a explicitní stavovou logikou. To znamená, že některé interakční a vizuální kvality, které na iOS působí samozřejmě, je na Androidu potřeba budovat ručně a často bez předem připravených konstrukcí.
+
+Právě proto jsem během vývoje studoval běžné Android designové a implementační praktiky a snažil se pochopit, co je pro tuto platformu přirozené. Šlo hlavně o návrh obrazovek v Compose, práci se stavem přes \textit{StateFlow}, používání menších komponent, důsledné oddělení viewmodelů od datové vrstvy a používání Material 3 principů. Oproti iOS je na Androidu mnohem silněji cítit potřeba navrhovat rozhraní tak, aby obstálo na širší škále zařízení a bylo dobře čitelné i bez spoléhání na vysoce sjednocené systémové animace. Výsledkem tedy nebyla snaha kopírovat iOS jednu ku jedné, ale převzít z něj to, co funguje z hlediska hierarchie informací, a spojit to s tím, co je přirozené pro Android.
+
+\section{Finální uživatelská zkušenost a závěr}
+Finální UX aplikace stojí na tom, že uživatel nemusí dlouho přemýšlet, kam kliknout dál. Po otevření aplikace okamžitě vidí hlavní možnosti práce s lokalitami. Vyhledávání je přímo na hlavní obrazovce, aktuální poloha je dostupná jedním klepnutím a uložená místa jsou soustředěná na stejném místě. Detail počasí je navržený jako jedna souvislá obrazovka, která přirozeně přechází od základní informace k podrobnějším údajům.
+
+Důležité je také to, že aplikace průběžně komunikuje svůj stav. Při načítání zobrazuje indikaci aktivity, při problému vrací čitelné hlášky a při akcích jako uložení nebo odebrání lokality nabízí okamžitou zpětnou vazbu. Výsledkem je rozhraní, které nepůsobí přeplněně, ale přitom poskytuje dostatek informací a logicky vede uživatele od výběru lokality až po detail počasí.
+
+Celkově práce ukázala, že inspirace iOS prostředím byla užitečná jako výchozí představa o kvalitě a čistotě rozhraní, ale finální podoba musela vzniknout s respektem k Android platformě, jejím komponentám a jejím běžným návrhovým zvyklostem. Právě v tom spočívá výsledná hodnota aplikace: nesnaží se být kopií jiného systému, ale převádí původní inspiraci do podoby, která na Androidu dává smysl technicky i uživatelsky.
 
 \end{document}
