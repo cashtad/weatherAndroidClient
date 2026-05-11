@@ -117,4 +117,6 @@
     <string name="cd_toggle_password_visibility">Toggle password visibility</string>
     <string name="cd_email_icon">Email icon</string>
     <string name="cd_password_icon">Password icon</string>
+
+    <string name="current_location_name">Current location</string>
 </resources>
