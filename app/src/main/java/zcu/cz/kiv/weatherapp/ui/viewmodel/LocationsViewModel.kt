@@ -111,7 +111,7 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
 
             repo.deleteFavorite(id)
                 .onSuccess {
-                    loadFavorites()   // обновляем список
+                    loadFavorites()
                     onDone()
                 }
                 .onFailure {
