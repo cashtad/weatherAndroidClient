@@ -1,0 +1,72 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+\title{Dokumentace aplikace WeatherApp pro Android}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Úvod}
+Tato práce popisuje mobilní aplikaci \textit{WeatherApp} pro Android. Cílem je stručně vysvětlit, jak je aplikace navržena, jak funguje z pohledu uživatele a jaká rozhodnutí byla udělána při návrhu rozhraní. Dokumentace se soustředí na hlavní principy, ne na popis každého řádku kódu.
+
+\section{Co aplikace řeší}
+Aplikace umožňuje:
+\begin{itemize}
+    \item vyhledat libovolné město,
+    \item použít aktuální GPS polohu,
+    \item zobrazit aktuální počasí, hodinovou a týdenní předpověď,
+    \item po přihlášení ukládat oblíbené lokality.
+\end{itemize}
+
+Z hlediska uživatelského scénáře jde o jednoduchý tok: uživatel vybere lokalitu na hlavní obrazovce, otevře detail počasí, případně si místo uloží mezi oblíbené.
+
+\section{Stručný technický přehled}
+Aplikace je postavená v Kotlinu s využitím Jetpack Compose. Struktura je rozdělena do tří hlavních vrstev:
+\begin{itemize}
+    \item \textbf{UI vrstva} (\textit{screens, components}) --- skládá obrazovky a reaguje na stav.
+    \item \textbf{ViewModel vrstva} --- drží stav obrazovek, spouští asynchronní operace a propojuje UI s repozitáři.
+    \item \textbf{Data vrstva} (\textit{repositories, remote, local}) --- komunikuje s backend API přes Retrofit a řeší lokální uložení tokenu a poslední zvolené lokality.
+\end{itemize}
+
+Navigace je řešena přes tři hlavní obrazovky: centrum lokalit, detail počasí a autentizace. Na síťové vrstvě je centrální obsluha chyb, která převádí technické výjimky na uživatelsky čitelná hlášení.
+
+\section{UX/UI: inspirace iOS a realita Androidu}
+Na začátku vývoje jsem se silně inspiroval UX a vizuálním stylem aplikace Počasí na iOS. iOS varianta působí velmi plynule, má výraznou hierarchii informací a konzistentní animace napříč celým systémem. Cílem bylo přenést podobný pocit přehlednosti i do Android aplikace.
+
+Během implementace se ale ukázalo, že na Androidu je dosažení stejného výsledku složitější. Hlavní důvod je, že pro část iOS chování neexistují v Androidu připravené konstrukce ve stejném rozsahu. U iOS jsou některé interakce a komponenty více sjednocené napříč systémem, zatímco na Androidu je potřeba více věcí skládat ručně a přizpůsobovat je konkrétní kombinaci knihoven a verzí.
+
+To se projevilo hlavně v detailech práce s top barem, vyhledáváním, přechody mezi stavy obrazovek a celkovým ``pocitem'' z animací. Výsledkem nebyla snaha kopírovat iOS 1:1, ale navrhnout UX, které respektuje androidí zvyklosti a zároveň si bere inspiraci v čistotě a prioritizaci informací.
+
+\section{Studium Android designových praktik}
+V průběhu vývoje jsem postupně studoval běžné Android postupy:
+\begin{itemize}
+    \item návrh obrazovek přes Compose a stavově řízené UI,
+    \item práci s ViewModel a \textit{StateFlow},
+    \item oddělení síťové logiky do repozitářů,
+    \item material design principy (hierarchie, typografie, karty, průběžná zpětná vazba).
+\end{itemize}
+
+Oproti iOS přístupu je v Android světě větší důraz na variabilitu zařízení a explicitní práci se stavem. Prakticky to znamená, že návrh musí více počítat s různými šířkami displeje, rozdílným systémovým chováním a širší škálou uživatelských scénářů. V iOS ekosystému bývá implementační cesta často přímočařejší díky vyšší unifikaci prostředí.
+
+\section{Finální UX aplikace}
+Finální uživatelská zkušenost je postavená na jednoduchosti:
+\begin{enumerate}
+    \item Uživatel vstoupí na obrazovku lokalit.
+    \item Může okamžitě použít GPS, nebo vyhledat město.
+    \item Po výběru vidí detail počasí: aktuální stav, 24hodinovou předpověď, týdenní výhled a doplňkové metriky.
+    \item Přihlášený uživatel si může lokaci uložit či odebrat z oblíbených.
+\end{enumerate}
+
+Rozhraní je navrženo tak, aby klíčové informace byly vidět bez zbytečných kroků. Důležitou roli hraje průběžná zpětná vazba: načítání dat, chybové hlášky a potvrzení akcí (například uložení/odebrání lokality) jsou zobrazené přímo v kontextu obrazovky.
+
+\section{Závěr}
+Vývoj ukázal, že inspirace iOS je užitečná jako kvalitativní cíl, ale finální řešení musí respektovat specifika Android platformy. Výsledná aplikace proto kombinuje čisté rozvržení informací inspirované iOS přístupem s praktickými Android postupy, které jsou dlouhodobě udržitelné a dobře rozšiřitelné.
+
+\end{document}
