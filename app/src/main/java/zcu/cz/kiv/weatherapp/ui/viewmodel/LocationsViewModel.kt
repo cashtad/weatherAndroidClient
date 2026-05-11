@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -20,6 +22,8 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _favorites = MutableStateFlow<List<FavoriteLocationResponse>>(emptyList())
     val favorites: StateFlow<List<FavoriteLocationResponse>> = _favorites
+
+    private var pendingDeleteJob: Job? = null
 
     private var recentlyDeleted: FavoriteLocationResponse? = null
 
@@ -118,25 +122,35 @@ class LocationsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun removeFavoriteLocally(fav: FavoriteLocationResponse) {
+    fun deleteFavoriteWithUndo(fav: FavoriteLocationResponse) {
+        confirmPendingDeletion()
+
         recentlyDeleted = fav
-        _favorites.value = _favorites.value.filterNot { it.id == fav.id }
+        _favorites.value = _favorites.value.filter { it.id != fav.id }
+
+        pendingDeleteJob = viewModelScope.launch {
+            delay(5000)
+            confirmPendingDeletion()
+        }
     }
 
-    fun confirmDeleteFavorite() {
+    private fun confirmPendingDeletion() {
         val fav = recentlyDeleted ?: return
+        recentlyDeleted = null
 
         viewModelScope.launch {
             repo.deleteFavorite(fav.id)
-                .onFailure { _error.value = it.message }
+                .onFailure {
+                    _error.value = "Failed to delete location on server"
+                }
         }
-
-        recentlyDeleted = null
     }
 
     fun undoDelete() {
-        val fav = recentlyDeleted ?: return
-        _favorites.value = listOf(fav) + _favorites.value
+        pendingDeleteJob?.cancel()
+        val restored = recentlyDeleted ?: return
+
+        _favorites.value = (_favorites.value + restored).sortedBy { it.name }
         recentlyDeleted = null
     }
 }

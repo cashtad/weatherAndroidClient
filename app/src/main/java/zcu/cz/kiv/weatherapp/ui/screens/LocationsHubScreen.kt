@@ -300,7 +300,8 @@ fun LocationsHubScreen(
                                 modifier = Modifier.animateItem(),
                                 onClick = { onLocationClick(fav.toLocation()) },
                                 onDelete = {
-                                    viewModel.removeFavoriteLocally(fav)
+                                    viewModel.deleteFavoriteWithUndo(fav)
+
                                     scope.launch {
                                         val result = snackbarHostState.showSnackbar(
                                             message = removedText,
@@ -309,8 +310,6 @@ fun LocationsHubScreen(
                                         )
                                         if (result == SnackbarResult.ActionPerformed) {
                                             viewModel.undoDelete()
-                                        } else {
-                                            viewModel.confirmDeleteFavorite()
                                         }
                                     }
                                 }
