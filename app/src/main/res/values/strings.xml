@@ -97,15 +97,24 @@
     <string name="weather_icon">Weather icon</string>
 
 
-    <string name="login_title">Login</string>
-    <string name="register_title">Register</string>
+    <string name="auth_welcome_back">Welcome Back!</string>
+    <string name="auth_create_account">Create Account</string>
+    <string name="auth_subtitle_login">Login to sync your favorite locations</string>
+    <string name="auth_subtitle_register">Sign up to get started</string>
 
-    <string name="email">Email</string>
-    <string name="password">Password</string>
+    <string name="email_label">Email Address</string>
+    <string name="password_label">Password</string>
+
+    <string name="error_invalid_email">Please enter a valid email</string>
+    <string name="error_short_password">Password must be at least 6 characters</string>
 
     <string name="login_button">Login</string>
-    <string name="create_account_button">Create account</string>
+    <string name="create_account_button">Sign Up</string>
 
-    <string name="switch_to_register">Create account</string>
+    <string name="switch_to_register">Don\'t have an account? Sign up</string>
     <string name="switch_to_login">Already have an account? Login</string>
+
+    <string name="cd_toggle_password_visibility">Toggle password visibility</string>
+    <string name="cd_email_icon">Email icon</string>
+    <string name="cd_password_icon">Password icon</string>
 </resources>

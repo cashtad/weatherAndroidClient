@@ -18,14 +18,13 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-
     fun login(email: String, password: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
             _loading.value = true
             _error.value = null
             repo.login(email, password)
                 .onSuccess { onSuccess() }
-                .onFailure { _error.value = it.message }
+                .onFailure { _error.value = it.message ?: "Authentication failed" }
             _loading.value = false
         }
     }
@@ -36,10 +35,14 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
             _error.value = null
             repo.register(email, password)
                 .onSuccess { onSuccess() }
-                .onFailure { _error.value = it.message }
+                .onFailure { _error.value = it.message ?: "Registration failed" }
             _loading.value = false
         }
     }
 
     fun isLoggedIn(): Boolean = repo.getToken() != null
+
+    fun clearError() {
+        _error.value = null
+    }
 }
